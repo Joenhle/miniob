@@ -23,6 +23,7 @@ extern double atof();
 %option reentrant
 
 WHITE_SAPCE      [\ \t\b\f]
+COMMENT          --.*
 DIGIT            [0-9]+
 
 ID               [A-Za-z_]+[A-Za-z0-9_]*
@@ -38,6 +39,7 @@ QUOTE            [\'\"]
 [\-]?{DIGIT}+                                        yylval->number=atoi(yytext); RETURN_TOKEN(NUMBER);
 [\-]?{DIGIT}+{DOT}{DIGIT}+                           yylval->floats=(float)(atof(yytext)); RETURN_TOKEN(FLOAT);
 
+{COMMENT}                                            RETURN_TOKEN(COMMENT);
 ";"                                                  RETURN_TOKEN(SEMICOLON);
 {DOT}                                                RETURN_TOKEN(DOT);
 "*"                                                  RETURN_TOKEN(STAR);

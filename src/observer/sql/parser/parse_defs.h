@@ -184,7 +184,8 @@ enum SqlCommandFlag {
   SCF_ROLLBACK,
   SCF_LOAD_DATA,
   SCF_HELP,
-  SCF_EXIT
+  SCF_EXIT,
+  SCF_COMMENT
 };
 // struct of flag and sql_struct
 typedef struct Query {

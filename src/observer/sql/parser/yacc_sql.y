@@ -62,6 +62,7 @@ ParserContext *get_context(yyscan_t scanner)
 
 //标识tokens
 %token  SEMICOLON
+        COMMENT
         CREATE
         DROP
         TABLE
@@ -154,7 +155,13 @@ command:
 	| load_data
 	| help
 	| exit
+	| comment
     ;
+
+comment:
+    COMMENT {
+       CONTEXT->ssql->flag=SCF_COMMENT;//"comment";
+    };
 
 exit:
     EXIT SEMICOLON {

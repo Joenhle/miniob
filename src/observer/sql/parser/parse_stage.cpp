@@ -137,6 +137,12 @@ RC ParseStage::handle_request(StageEvent *event)
     query_destroy(query_result);
     return RC::INTERNAL;
   }
+  if (query_result->flag == SCF_COMMENT){
+    sql_event->session_event()->set_response("\n");
+    query_destroy(query_result);
+
+    return RC::UNIMPLENMENT;
+  }
 
   sql_event->set_query(query_result);
   return RC::SUCCESS;
