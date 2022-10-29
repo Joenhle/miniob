@@ -102,10 +102,11 @@ bool compare_for_sort(Tuple4Sort arg1,Tuple4Sort arg2){
         continue ;
       } else{
         if(tmp_arg1_cell.is_null()){
-          return false;
+          order_flag *=-1;
         }else{
-          return true;
+          order_flag *=1;
         }
+        return order_flag<0;
       }
     }
     order_flag *=tmp_arg1_cell.compare(tmp_arg2_cell);
