@@ -1436,7 +1436,7 @@ RC BplusTreeHandler::insert_entry(const std::vector<const char *> &user_key, con
     std::list<RID> rids;
     RC rc = get_entry(user_key, lens, rids);
     if(!rids.empty()){
-      return RC::GENERIC_ERROR;
+      return RC::UNIQUE_KEY_EXIST;
     }
   }
   char *key = make_key(user_key, *rid);

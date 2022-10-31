@@ -225,6 +225,7 @@ enum RC {
   FILE_ERROR,       /* File error */
   LOGBUF,           /* clog buffer error */
   DIV_ZERO,
+  UNIQUE_KEY_EXIST, /* UNIQUE key already exist*/
   NOTICE = 100,     /* Notifications from log() */
 
   /* buffer pool part */

@@ -32,7 +32,11 @@ RC UpdateOperator::open() {
     vector<Value *> to_update_attr_val = update_stmt_->values();
     for(int i = 0 ;i < val_amount ; i++){
       const char * attr_name = to_update_attr_name[i].c_str();
-      table->update_record(nullptr,&record,attr_name,to_update_attr_val[i]);
+      rc = table->update_record(nullptr,&record,attr_name,to_update_attr_val[i]);
+      if (rc != SUCCESS) {
+        LOG_WARN("Failed to update record: %s.", strrc(rc));
+        return rc;
+      }
     }
     //for(int i = 0 ;i<update_stmt_->)
     //table->update_record(nullptr, &record, update_stmt_->update_attr(), update_stmt_->values());

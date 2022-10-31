@@ -710,19 +710,11 @@ RC Table::update_record(Trx *trx, Record *record, const char *attribute_name, co
   } else {
     RC rc;
 
-    // delete index
-    rc = delete_entry_of_indexes(record->data(), record->rid(), false);
-    if (rc != RC::SUCCESS) {
-      LOG_ERROR("Failed to delete indexes of record (rid=%d.%d). rc=%d:%s",
-                record->rid().page_num,
-                record->rid().slot_num,
-                rc,
-                strrc(rc));
-      return rc;
-    }
     // update record
     int record_size = table_meta_.record_size();
     char *record_data = record->data();
+    auto old_data = new char[record_size];
+    memcpy(old_data, record_data, record_size);
     int* null_value_map = (int*)(record_data + table_meta_.field(1)->offset());
     if (value->type == UNDEFINED) {
       *null_value_map = set_bit(*null_value_map, table_meta_.field_index(attribute_name), true);
@@ -750,12 +742,15 @@ RC Table::update_record(Trx *trx, Record *record, const char *attribute_name, co
     // insert index
     rc = insert_entry_of_indexes(record->data(), record->rid());
     if (rc != RC::SUCCESS) {
-      RC rc2 = delete_entry_of_indexes(record->data(), record->rid(), true);
-      if (rc2 != RC::SUCCESS) {
-        LOG_ERROR("Failed to rollback index data when insert index entries failed. table name=%s, rc=%d:%s",
-            name(),
-            rc2,
-            strrc(rc2));
+      RC rc2 ;
+      if(rc != RC::UNIQUE_KEY_EXIST){
+        rc2 = delete_entry_of_indexes(record->data(), record->rid(), true);
+        if (rc2 != RC::SUCCESS) {
+          LOG_ERROR("Failed to rollback index data when insert index entries failed. table name=%s, rc=%d:%s",
+                    name(),
+                    rc2,
+                    strrc(rc2));
+        }
       }
       rc2 = record_handler_->delete_record(&record->rid());
       if (rc2 != RC::SUCCESS) {
@@ -764,6 +759,17 @@ RC Table::update_record(Trx *trx, Record *record, const char *attribute_name, co
             rc2,
             strrc(rc2));
       }
+      return rc;
+    }
+    // delete index
+    rc = delete_entry_of_indexes(old_data, record->rid(), false);
+
+    if (rc != RC::SUCCESS) {
+      LOG_ERROR("Failed to delete indexes of record (rid=%d.%d). rc=%d:%s",
+                record->rid().page_num,
+                record->rid().slot_num,
+                rc,
+                strrc(rc));
       return rc;
     }
   }

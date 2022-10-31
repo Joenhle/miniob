@@ -12,3 +12,4 @@ INSERT INTO unique_table VALUES (1,2,1);
 
 -- echo 2. select
 SELECT * FROM unique_table;
+UPDATE unique_table set id=1 where id=3;
