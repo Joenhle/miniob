@@ -32,14 +32,19 @@ public:
   IndexMeta() = default;
 
   RC init(const char *name, const FieldMeta &field);
-  RC init(const char *name, const std::vector<const FieldMeta *> &field);
+  RC init(const char *name, const std::vector<const FieldMeta *> &field, bool is_unique);
 
 public:
   const char *name() const;
   std::string field() const;
-  const char *field(int idx)const;
-  RC get_field_metas(TableMeta& table_meta, std::vector<const FieldMeta*>& out) const;
-  int get_num_of_fields()const{
+  const char *field(int idx) const;
+  RC get_field_metas(TableMeta &table_meta, std::vector<const FieldMeta *> &out) const;
+  int is_unique() const
+  {
+    return is_unique_ ? 1 : 0;
+  }
+  int get_num_of_fields() const
+  {
     return num_of_fields_;
   }
 
@@ -51,8 +56,9 @@ public:
   static RC from_json(const TableMeta &table, const Json::Value &json_value, IndexMeta &index);
 
 protected:
-  std::string name_;   // index's name
-  std::vector<std::string> fields_; // field's name
+  std::string name_;                 // index's name
+  std::vector<std::string> fields_;  // field's name
+  bool is_unique_;
   int num_of_fields_;
 };
 #endif  // __OBSERVER_STORAGE_COMMON_INDEX_META_H__

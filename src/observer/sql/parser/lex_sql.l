@@ -89,6 +89,7 @@ AGGREGATION_FUNC MAX|max|MIN|min|COUNT|count|AVG|avg|SUM|sum
 [Aa][Ss]                                             RETURN_TOKEN(AS);
 [Nn][Uu][Ll][Ll][Aa][Bb][Ll][Ee]                     RETURN_TOKEN(NULLABLE);
 [Nn][Uu][Ll][Ll]                                     RETURN_TOKEN(NULL_);
+[Uu][Nn][Ii][Qq][Uu][Ee]                             RETURN_TOKEN(UNIQUE);
 {AGGREGATION_FUNC}                                   yylval->string=strdup(yytext); RETURN_TOKEN(AGGREGATION_FUNC);
 {ID}                                                 yylval->string=strdup(yytext); RETURN_TOKEN(ID);
 "("                                                  RETURN_TOKEN(LBRACE);

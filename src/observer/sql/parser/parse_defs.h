@@ -237,6 +237,7 @@ typedef struct {
 typedef struct {
   char *index_name;     // Index name
   char *relation_name;  // Relation name
+  int is_unique;        // is_unique
   StringArray attribute_names;  // Attribute names
 } CreateIndex;
 

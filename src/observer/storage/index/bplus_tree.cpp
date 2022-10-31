@@ -749,7 +749,7 @@ RC BplusTreeHandler::sync()
   return disk_buffer_pool_->flush_all_pages();
 }
 
-RC BplusTreeHandler::create(const char *file_name, const std::vector<const FieldMeta *> &field_metas,
+RC BplusTreeHandler::create(const char *file_name, const std::vector<const FieldMeta *> &field_metas, int is_unique,
     int internal_max_size /* = -1*/, int leaf_max_size /* = -1 */)
 {
   BufferPoolManager &bpm = BufferPoolManager::instance();
@@ -809,6 +809,7 @@ RC BplusTreeHandler::create(const char *file_name, const std::vector<const Field
   file_header->key_length = attr_total_length + sizeof(RID);
   memcpy(file_header->attr_types, attr_types, MAX_NUM * sizeof(AttrType));
   memcpy(file_header->attr_lengths, attr_lengths, MAX_NUM * sizeof(int32_t));
+  file_header->is_unique = is_unique ? 1 : 0;
   file_header->attr_nums = attr_num;
   file_header->internal_max_size = internal_max_size;
   file_header->leaf_max_size = leaf_max_size;
@@ -1430,7 +1431,14 @@ RC BplusTreeHandler::insert_entry(const std::vector<const char *> &user_key, con
     LOG_WARN("Invalid arguments, key is empty or rid is empty");
     return RC::INVALID_ARGUMENT;
   }
-
+  if (file_header_.is_unique){
+    std::vector<int> lens(file_header_.attr_lengths, file_header_.attr_lengths+file_header_.attr_nums);
+    std::list<RID> rids;
+    RC rc = get_entry(user_key, lens, rids);
+    if(!rids.empty()){
+      return RC::GENERIC_ERROR;
+    }
+  }
   char *key = make_key(user_key, *rid);
   if (key == nullptr) {
     LOG_WARN("Failed to alloc memory for key.");

@@ -168,7 +168,7 @@ RC DefaultHandler::create_index(
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
   std::vector<std::string> fields = {attribute_name};
-  return table->create_index(trx, index_name, fields);
+  return table->create_index(trx, index_name, fields, false);
 }
 
 RC DefaultHandler::drop_index(Trx *trx, const char *dbname, const char *relation_name, const char *index_name)

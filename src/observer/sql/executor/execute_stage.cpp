@@ -319,7 +319,7 @@ RC ExecuteStage::do_create_index(SQLStageEvent *sql_event)
   for (int i = attr_count - 1; i >= 0; i--) {
     fields.push_back(attribute_names[i]);
   }
-  RC rc = table->create_index(nullptr, create_index.index_name, fields);
+  RC rc = table->create_index(nullptr, create_index.index_name, fields, create_index.is_unique);
   sql_event->session_event()->set_response(rc == RC::SUCCESS ? "SUCCESS\n" : "FAILURE\n");
   return rc;
 }
@@ -340,7 +340,7 @@ RC ExecuteStage::do_show_index(SQLStageEvent *sql_event)
     const IndexMeta *index = table->table_meta().index(i);
     auto num_of_fields = index->get_num_of_fields();
     for (int j = 1; j <= num_of_fields; j++) {
-      ss << table->name() << " | 1 | " << index->name() << " | " << j << " | " << index->field(j - 1) << "\n";
+      ss << table->name() << " | "<< index->is_unique() <<" | " << index->name() << " | " << j << " | " << index->field(j - 1) << "\n";
     }
   }
   session_event->set_response(ss.str().c_str());

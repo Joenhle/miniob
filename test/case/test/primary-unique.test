@@ -10,4 +10,4 @@ INSERT INTO unique_table VALUES (3,2,1);
 INSERT INTO unique_table VALUES (1,2,1);
 
 -- echo 2. select
--- sort SELECT * FROM unique_table;
+SELECT * FROM unique_table;

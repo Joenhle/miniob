@@ -129,7 +129,8 @@ public:
   {
     attr_comparator_.init(attr_types, attr_lengths, attr_num);
   }
-  void init(AttrType attr_type, int attr_length){
+  void init(AttrType attr_type, int attr_length)
+  {
     init(&attr_type, &attr_length, 1);
   }
 
@@ -259,6 +260,7 @@ struct IndexFileHeader {
   int32_t attr_length;  // Total length
   int32_t attr_nums;    // num of attribute
   int32_t key_length;   // attr length + sizeof(RID)
+  int32_t is_unique;    // is_unique
   AttrType attr_types[MAX_NUM];
   int32_t attr_lengths[MAX_NUM];
 
@@ -475,8 +477,8 @@ public:
    * 此函数创建一个名为fileName的索引。
    * attrType描述被索引属性的类型，attrLength描述被索引属性的长度
    */
-  RC create(const char *file_name, const std::vector<const FieldMeta *> &field_metas, int internal_max_size = -1,
-      int leaf_max_size = -1);
+  RC create(const char *file_name, const std::vector<const FieldMeta *> &field_metas, int is_unique = 0,
+      int internal_max_size = -1, int leaf_max_size = -1);
 
   /**
    * 打开名为fileName的索引文件。

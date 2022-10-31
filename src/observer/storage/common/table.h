@@ -69,7 +69,7 @@ public:
   RC scan_record(Trx *trx, ConditionFilter *filter, int limit, void *context,
       void (*record_reader)(const char *data, void *context));
 
-  RC create_index(Trx *trx, const char *index_name, std::vector<std::string>& fields);
+  RC create_index(Trx *trx, const char *index_name, std::vector<std::string> &fields, bool is_unique);
 
   RC delete_index(Trx *trx, const char *index_name);
 

@@ -30,10 +30,10 @@ RC BplusTreeIndex::create(
         index_meta.field().c_str());
     return RC::RECORD_OPENNED;
   }
-  // TODO: change Index::init
+
   Index::init(index_meta, field_metas);
 
-  RC rc = index_handler_.create(file_name, field_metas);
+  RC rc = index_handler_.create(file_name, field_metas, index_meta.is_unique());
   if (RC::SUCCESS != rc) {
     LOG_WARN("Failed to create index_handler, file_name:%s, index:%s, field:%s, rc:%s",
         file_name,

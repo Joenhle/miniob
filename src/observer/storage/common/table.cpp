@@ -585,7 +585,7 @@ static RC insert_index_record_reader_adapter(Record *record, void *context)
   return inserter.insert_index(record);
 }
 
-RC Table::create_index(Trx *trx, const char *index_name, std::vector<std::string> &fields)
+RC Table::create_index(Trx *trx, const char *index_name, std::vector<std::string> &fields, bool is_unique)
 {
   int attr_count = fields.size();
   for (int i = 0; i < attr_count; i++) {
@@ -614,7 +614,7 @@ RC Table::create_index(Trx *trx, const char *index_name, std::vector<std::string
   }
 
   IndexMeta new_index_meta;
-  rc = new_index_meta.init(index_name, field_metas);
+  rc = new_index_meta.init(index_name, field_metas, is_unique);
   if (rc != RC::SUCCESS) {
     LOG_INFO("Failed to init IndexMeta in table:%s, index_name:%s, field_schema:%s",
         name(),
