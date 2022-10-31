@@ -708,17 +708,18 @@ RC Table::update_record(Trx *trx, Record *record, const char *attribute_name, co
     LOG_WARN("[Table::update_record] not support method with trx");
     return UNIMPLENMENT;
   } else {
+    RC rc;
+
     // delete index
-    RC rc = delete_entry_of_indexes(record->data(), record->rid(), false);
+    rc = delete_entry_of_indexes(record->data(), record->rid(), false);
     if (rc != RC::SUCCESS) {
       LOG_ERROR("Failed to delete indexes of record (rid=%d.%d). rc=%d:%s",
-          record->rid().page_num,
-          record->rid().slot_num,
-          rc,
-          strrc(rc));
+                record->rid().page_num,
+                record->rid().slot_num,
+                rc,
+                strrc(rc));
       return rc;
     }
-
     // update record
     int record_size = table_meta_.record_size();
     char *record_data = record->data();
