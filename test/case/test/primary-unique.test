@@ -9,6 +9,18 @@ CREATE UNIQUE INDEX index_id on unique_table(id);
 INSERT INTO unique_table VALUES (3,2,1);
 INSERT INTO unique_table VALUES (1,2,1);
 
+CREATE TABLE unique_table_2(id int, col1 int, col2 int, col3 int);
+CREATE UNIQUE INDEX index_id_col1 on unique_table_2(id, col1);
+SHOW INDEX FROM unique_table_2;
+INSERT INTO unique_table_2 VALUES (1,2,1,1);
+INSERT INTO unique_table_2 VALUES (2,3,1,1);
+SELECT * FROM unique_table_2;
+INSERT INTO unique_table_2 VALUES (1,2,3,3);
+SELECT * FROM unique_table_2;
+DELETE FROM unique_table_2 where id = 1 and col1 = 2;
+SELECT * FROM unique_table_2;
+INSERT INTO unique_table_2 VALUES (1,2,3,3);
+SELECT * FROM unique_table_2;
 
 -- echo 2. select
 SELECT * FROM unique_table;
