@@ -91,11 +91,20 @@ public:
   void set_data(char *data) { this->data_ = data; }
   char *data() { return this->data_; }
   const char *data() const { return this->data_; }
-
   void set_rid(const RID &rid) { this->rid_ = rid; }
   void set_rid(const PageNum page_num, const SlotNum slot_num) { this->rid_.page_num = page_num; this->rid_.slot_num = slot_num; }
   RID & rid() { return rid_; }
   const RID &rid() const { return rid_; };
+  vector<int> null_fields() {
+    vector<int> arr;
+    int num = *(int*)(data_+4);
+    for (int i = 0; i < 32; ++i) {
+      if ((num & (1 << i)) != 0) {
+        arr.push_back(i);
+      }
+    }
+    return arr;
+  }
 
 private:
   RID                            rid_;
