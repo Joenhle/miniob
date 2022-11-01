@@ -43,6 +43,10 @@ public:
   {
     return is_unique_ ? 1 : 0;
   }
+  int is_non_unique() const
+  {
+    return is_unique_ ? 0 : 1;
+  }
   int get_num_of_fields() const
   {
     return num_of_fields_;

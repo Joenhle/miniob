@@ -340,7 +340,7 @@ RC ExecuteStage::do_show_index(SQLStageEvent *sql_event)
     const IndexMeta *index = table->table_meta().index(i);
     auto num_of_fields = index->get_num_of_fields();
     for (int j = 1; j <= num_of_fields; j++) {
-      ss << table->name() << " | "<< index->is_unique() <<" | " << index->name() << " | " << j << " | " << index->field(j - 1) << "\n";
+      ss << table->name() << " | "<< index->is_non_unique() <<" | " << index->name() << " | " << j << " | " << index->field(j - 1) << "\n";
     }
   }
   session_event->set_response(ss.str().c_str());
