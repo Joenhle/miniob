@@ -260,7 +260,7 @@ struct IndexFileHeader {
   int32_t attr_length;  // Total length
   int32_t attr_nums;    // num of attribute
   int32_t key_length;   // attr length + sizeof(RID)
-  int32_t is_unique;    // is_unique
+  int32_t is_unique_;    // is_unique
   AttrType attr_types[MAX_NUM];
   int32_t attr_lengths[MAX_NUM];
 
@@ -525,6 +525,9 @@ public:
    */
   bool validate_tree();
 
+  RC update_entry(
+      const std::vector<const char *> &old_user_key, const std::vector<const char *> &new_user_key, const RID *rid);
+
 public:
   RC print_tree();
   RC print_leafs();
@@ -583,6 +586,7 @@ protected:
 private:
   friend class BplusTreeScanner;
   friend class BplusTreeTester;
+  bool entry_exists(const std::vector<const char *> &user_key);
 };
 
 class BplusTreeScanner {

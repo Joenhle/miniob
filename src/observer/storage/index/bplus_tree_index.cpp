@@ -127,6 +127,12 @@ std::vector<const char *> BplusTreeIndex::extract_key(const char *record)
   }
   return key;
 }
+RC BplusTreeIndex::update_entry(const char *old_record, const char *new_record, const RID *rid)
+{
+  const auto old_key = extract_key(old_record);
+  const auto new_key = extract_key(new_record);
+  return index_handler_.update_entry(old_key, new_key, rid);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 BplusTreeIndexScanner::BplusTreeIndexScanner(BplusTreeHandler &tree_handler) : tree_scanner_(tree_handler)

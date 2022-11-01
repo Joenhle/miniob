@@ -50,6 +50,7 @@ public:
 
   virtual RC insert_entry(const char *record, const RID *rid) = 0;
   virtual RC delete_entry(const char *record, const RID *rid) = 0;
+  virtual RC update_entry(const char *old_record, const char *new_record, const RID *rid) = 0;
 
   virtual IndexScanner *create_scanner(const std::vector<const char *> &left_keys, const std::vector<int> &left_lens,
       bool left_inclusive, const std::vector<const char *> &right_key, const std::vector<int> &right_lens,

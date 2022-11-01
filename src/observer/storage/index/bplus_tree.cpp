@@ -809,7 +809,7 @@ RC BplusTreeHandler::create(const char *file_name, const std::vector<const Field
   file_header->key_length = attr_total_length + sizeof(RID);
   memcpy(file_header->attr_types, attr_types, MAX_NUM * sizeof(AttrType));
   memcpy(file_header->attr_lengths, attr_lengths, MAX_NUM * sizeof(int32_t));
-  file_header->is_unique = is_unique ? 1 : 0;
+  file_header->is_unique_ = is_unique ? 1 : 0;
   file_header->attr_nums = attr_num;
   file_header->internal_max_size = internal_max_size;
   file_header->leaf_max_size = leaf_max_size;
@@ -1431,13 +1431,8 @@ RC BplusTreeHandler::insert_entry(const std::vector<const char *> &user_key, con
     LOG_WARN("Invalid arguments, key is empty or rid is empty");
     return RC::INVALID_ARGUMENT;
   }
-  if (file_header_.is_unique){
-    std::vector<int> lens(file_header_.attr_lengths, file_header_.attr_lengths+file_header_.attr_nums);
-    std::list<RID> rids;
-    RC rc = get_entry(user_key, lens, rids);
-    if(!rids.empty()){
+  if (file_header_.is_unique_ && entry_exists(user_key)){
       return RC::UNIQUE_KEY_EXIST;
-    }
   }
   char *key = make_key(user_key, *rid);
   if (key == nullptr) {
@@ -1474,6 +1469,12 @@ RC BplusTreeHandler::insert_entry(const std::vector<const char *> &user_key, con
   return RC::SUCCESS;
 }
 
+bool BplusTreeHandler::entry_exists(const std::vector<const char *>& user_key){
+    std::vector<int> lens(file_header_.attr_lengths, file_header_.attr_lengths+file_header_.attr_nums);
+    std::list<RID> rids;
+    get_entry(user_key, lens, rids);
+    return !rids.empty();
+}
 RC BplusTreeHandler::get_entry(
     const std::vector<const char *> &user_key, const std::vector<int> &key_lens, std::list<RID> &rids)
 {
@@ -1737,6 +1738,27 @@ RC BplusTreeHandler::delete_entry(const std::vector<const char *> &user_key, con
   }
   mem_pool_item_->free(key);
   return RC::SUCCESS;
+}
+RC BplusTreeHandler::update_entry(
+    const std::vector<const char *> &old_user_key, const std::vector<const char *> &new_user_key, const RID *rid)
+{
+  bool eq = true;
+  for(int i = 0; i < file_header_.attr_nums && eq; i++){
+    auto len = file_header_.attr_lengths[i];
+    if(memcmp(old_user_key[i], new_user_key[i], len) != 0){
+      eq = false;
+    }
+  }
+  if(eq) return RC::SUCCESS;
+
+  if(file_header_.is_unique_ && entry_exists(new_user_key)){
+    return RC::UNIQUE_KEY_EXIST;
+  }
+  if(delete_entry(old_user_key, rid) == RC::SUCCESS){
+    return insert_entry(new_user_key, rid);
+  }else {
+    return insert_entry(old_user_key, rid);
+  }
 }
 
 BplusTreeScanner::BplusTreeScanner(BplusTreeHandler &tree_handler) : tree_handler_(tree_handler)
