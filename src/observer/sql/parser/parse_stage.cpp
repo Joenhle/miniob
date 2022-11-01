@@ -105,6 +105,34 @@ std::string handle_sub_query(std::string sql) {
   return "";
 }
 
+
+
+RC ParseStage::handle_request(StageEvent *event, bool sub_query)
+{
+  // 先解析
+  SQLStageEvent *sql_event = static_cast<SQLStageEvent *>(event);
+  const std::string &sql = sql_event->sql();
+  Query *query_result = query_create();
+  if (nullptr == query_result) {
+    LOG_ERROR("Failed to create query.");
+    return RC::INTERNAL;
+  }
+  RC ret = parse(sql.c_str(), query_result);
+  query_result->sql = sql.c_str();
+  if (ret != RC::SUCCESS) {
+    // set error information to event
+    LOG_ERROR("Failed to parse sql\n");
+    sql_event->session_event()->set_response("FAILURE\n");
+    query_destroy(query_result);
+    return RC::INTERNAL;
+  }
+  sql_event->set_query(query_result);
+  return RC::SUCCESS;
+}
+
+
+
+
 void ParseStage::handle_event(StageEvent *event)
 {
   auto handle = [&](SQLStageEvent *sql_event, bool sub_query) {
@@ -136,8 +164,8 @@ void ParseStage::handle_event(StageEvent *event)
   std::string temp = handle_sub_query(sql_event->sql());
   //todo 先假设只有update-select才会走子查询，且只考虑了子查询select只有一个的情况
   while (temp != "") {
-    std::string sub_query = temp + ";";
-    sql_event->set_sql(sub_query.c_str());
+    sql_event->set_sql(string(temp + ";").c_str());
+
     //先执行子查询
     sql_event->set_is_sub_query(true);
     if((rc = handle(sql_event, true)) != SUCCESS) {
@@ -185,26 +213,4 @@ void ParseStage::callback_event(StageEvent *event, CallbackContext *context)
   return;
 }
 
-RC ParseStage::handle_request(StageEvent *event)
-{
-  SQLStageEvent *sql_event = static_cast<SQLStageEvent *>(event);
-  const std::string &sql = sql_event->sql();
 
-  Query *query_result = query_create();
-  if (nullptr == query_result) {
-    LOG_ERROR("Failed to create query.");
-    return RC::INTERNAL;
-  }
-  RC ret = parse(sql.c_str(), query_result);
-  query_result->sql = sql.c_str();
-  if (ret != RC::SUCCESS) {
-    // set error information to event
-    LOG_ERROR("Failed to parse sql\n");
-    sql_event->session_event()->set_response("FAILURE\n");
-    query_destroy(query_result);
-    return RC::INTERNAL;
-  }
-
-  sql_event->set_query(query_result);
-  return RC::SUCCESS;
-}

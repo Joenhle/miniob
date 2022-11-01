@@ -34,7 +34,7 @@ protected:
   void callback_event(common::StageEvent *event, common::CallbackContext *context);
 
 protected:
-  RC handle_request(common::StageEvent *event);
+  RC handle_request(common::StageEvent *event, bool sub_query);
 
 private:
   Stage *optimize_stage_ = nullptr;
