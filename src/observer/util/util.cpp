@@ -147,7 +147,7 @@ bool str_contains_by_regex(std::string& s, std::string regex_str) {
   bool res = false;
   try {
     std::regex rule(regex_str);
-    res = std::regex_match(s, rule);
+    res = std::regex_search(s, rule);
   } catch (std::regex_error &e) {
     return false;
   }

@@ -95,8 +95,8 @@ public:
   void set_rid(const PageNum page_num, const SlotNum slot_num) { this->rid_.page_num = page_num; this->rid_.slot_num = slot_num; }
   RID & rid() { return rid_; }
   const RID &rid() const { return rid_; };
-  vector<int> null_fields() {
-    vector<int> arr;
+  std::vector<int> null_fields() {
+    std::vector<int> arr;
     int num = *(int*)(data_+4);
     for (int i = 0; i < 32; ++i) {
       if ((num & (1 << i)) != 0) {
@@ -104,7 +104,7 @@ public:
       }
     }
     return arr;
-  }
+  };
 
 private:
   RID                            rid_;

@@ -106,20 +106,28 @@ pair<string, SubQueryOper> handle_sub_query(std::string sql) {
     }
     string oper;
     index = result[0].first-1;
-    num = 0;
-    while (index >= sql.begin()) {
-      if (*index == ' ') num++;
-      else {
-        if (num > 0) num *= -1;
+    if (*index != ' ') {
+      while (index >= sql.begin() && *index != ' ') {
         oper = *index + oper;
+        index--;
       }
-      if (num == 0) {
-        if (oper == "in" || oper == "IN") return {sub_query, SubQueryOper::IN};
-        if (oper == "exist" || oper == "EXIST") return {sub_query, SubQueryOper::EXIST};
-        return {sub_query, SubQueryOper::COMPARE};
+    } else {
+      num = 0;
+      while (index >= sql.begin()) {
+        if (*index == ' ') num++;
+        else {
+          if (num > 0) num *= -1;
+          oper = *index + oper;
+        }
+        if (num == 0) {
+          break;
+        }
+        index--;
       }
-      index--;
     }
+    if (oper == "in" || oper == "IN") return {sub_query, SubQueryOper::IN};
+    if (oper == "exists" || oper == "EXISTS") return {sub_query, SubQueryOper::EXIST};
+    return {sub_query, SubQueryOper::COMPARE};
   }
   return pair<string, SubQueryOper>{"", SubQueryOper::NO_OPER};
 }
@@ -168,7 +176,7 @@ void ParseStage::handle_event(StageEvent *event)
   auto rebuild = [](string temp){
     string k;
     for (auto ch : temp) {
-      if (ch == '(' || ch == ')') k += "\\";
+      if (ch == '(' || ch == ')' || ch == '*') k += "\\";
       k += ch;
     }
     return k;
@@ -244,9 +252,13 @@ void ParseStage::handle_event(StageEvent *event)
       for (int field = 0; field < fields.size(); ++field) {
         TupleCell cell;
         string value;
-        un
+        unordered_set<string> value_set;
         for (int i = 0; i < sub_select_tuples.size(); ++i) {
           sub_select_tuples[i]->cell_at(field, cell);
+          if (value_set.count(cell.to_string()) == 1) {
+            continue;
+          }
+          value_set.insert(cell.to_string());
           if (i == sub_select_tuples.size() - 1) {
             value += cell.to_string();
           } else {
@@ -255,8 +267,15 @@ void ParseStage::handle_event(StageEvent *event)
         }
         in_values.push_back(value);
       }
-      string replaced_str = fields[0] + " in (" + in_values[0] + ") ";
-      str_replace_by_regex(new_sql, "[Ee][Xx][Ss][Ii][Tt][ ]*" + sub_query_pair.first, replaced_str);
+      bool is_not_exists = str_contains_by_regex(new_sql, "[Nn][Oo][Tt][ ]*[Ee][Xx][Ii][Ss][Tt][Ss]");
+      string replaced_str = fields[0];
+      if (is_not_exists) {
+        replaced_str += (" not in (" + in_values[0] + ") ");
+        str_replace_by_regex(new_sql, "[Nn][Oo][Tt][ ]*[Ee][Xx][Ii][Ss][Tt][Ss][ ]*\\([ ]*" + rebuild(sub_query_pair.first) + "[ ]*\\)", replaced_str);
+      } else {
+        replaced_str += (" in (" + in_values[0] + ") ");
+        str_replace_by_regex(new_sql, "[Ee][Xx][Ii][Ss][Tt][Ss][ ]*\\([ ]*" + rebuild(sub_query_pair.first) + "[ ]*\\)", replaced_str);
+      }
       sql_event->set_sql(new_sql.c_str());
       sub_query_pair =  handle_sub_query(sql_event->sql());
     }
