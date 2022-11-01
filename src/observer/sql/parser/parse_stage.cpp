@@ -25,7 +25,9 @@ See the Mulan PSL v2 for more details. */
 #include "event/session_event.h"
 #include "event/sql_event.h"
 #include "sql/parser/parse.h"
-
+#include <utility>
+#include <unordered_set>
+using namespace std;
 
 using namespace common;
 
@@ -84,7 +86,7 @@ void ParseStage::cleanup()
   LOG_TRACE("Exit");
 }
 
-std::string handle_sub_query(std::string sql) {
+pair<string, SubQueryOper> handle_sub_query(std::string sql) {
   std::smatch result;
   std::regex pattern("\\([ ]*[Ss][Ee][Ll][Ee][Cc][Tt] ");
   std::string::const_iterator iterStart = sql.begin(), iterEnd = sql.end();
@@ -98,23 +100,40 @@ std::string handle_sub_query(std::string sql) {
       sub_query += *index;
       index++;
       if (num == 0) {
-        return sub_query.substr(1, sub_query.length()-2);
+        sub_query = sub_query.substr(1, sub_query.length()-2);
+        break;
       }
     }
+    string oper;
+    index = result[0].first-1;
+    num = 0;
+    while (index >= sql.begin()) {
+      if (*index == ' ') num++;
+      else {
+        if (num > 0) num *= -1;
+        oper = *index + oper;
+      }
+      if (num == 0) {
+        if (oper == "in" || oper == "IN") return {sub_query, SubQueryOper::IN};
+        if (oper == "exist" || oper == "EXIST") return {sub_query, SubQueryOper::EXIST};
+        return {sub_query, SubQueryOper::COMPARE};
+      }
+      index--;
+    }
   }
-  return "";
+  return pair<string, SubQueryOper>{"", SubQueryOper::NO_OPER};
 }
-
-
 
 RC ParseStage::handle_request(StageEvent *event, bool sub_query)
 {
   // 先解析
   SQLStageEvent *sql_event = static_cast<SQLStageEvent *>(event);
+  sql_event->set_is_sub_query(sub_query);
   const std::string &sql = sql_event->sql();
   Query *query_result = query_create();
   if (nullptr == query_result) {
     LOG_ERROR("Failed to create query.");
+    callback_event(sql_event, nullptr);
     return RC::INTERNAL;
   }
   RC ret = parse(sql.c_str(), query_result);
@@ -124,79 +143,126 @@ RC ParseStage::handle_request(StageEvent *event, bool sub_query)
     LOG_ERROR("Failed to parse sql\n");
     sql_event->session_event()->set_response("FAILURE\n");
     query_destroy(query_result);
+    callback_event(sql_event, nullptr);
     return RC::INTERNAL;
   }
   sql_event->set_query(query_result);
+  resolve_stage_->handle_event(sql_event);
   return RC::SUCCESS;
 }
 
-
-
-
 void ParseStage::handle_event(StageEvent *event)
 {
-  auto handle = [&](SQLStageEvent *sql_event, bool sub_query) {
-    RC rc = handle_request(sql_event);
-    if (RC::SUCCESS != rc) {
-      callback_event(sql_event, nullptr);
-      return rc;
-    }
-    if (!sub_query) {
-      CompletionCallback *cb = new (std::nothrow) CompletionCallback(this, nullptr);
-      if (cb == nullptr) {
-        LOG_ERROR("Failed to new callback for SQLStageEvent");
-        callback_event(sql_event, nullptr);
-        return INTERNAL;
-      }
-      sql_event->push_callback(cb);
-      resolve_stage_->handle_event(event);
-      sql_event->done_immediate();
-    } else {
-      resolve_stage_->handle_event(event);
-    }
-    return SUCCESS;
-  };
-
   RC rc = SUCCESS;
   LOG_TRACE("Enter\n");
   auto sql_event = static_cast<SQLStageEvent *>(event);
+  CompletionCallback *cb = new (std::nothrow) CompletionCallback(this, nullptr);
+  if (cb == nullptr) {
+    LOG_ERROR("Failed to new callback for SQLStageEvent");
+    callback_event(sql_event, nullptr);
+    return;
+  }
+  sql_event->push_callback(cb);
   std::string old_str = sql_event->sql();
-  std::string temp = handle_sub_query(sql_event->sql());
-  //todo 先假设只有update-select才会走子查询，且只考虑了子查询select只有一个的情况
-  while (temp != "") {
-    sql_event->set_sql(string(temp + ";").c_str());
-
-    //先执行子查询
-    sql_event->set_is_sub_query(true);
-    if((rc = handle(sql_event, true)) != SUCCESS) {
-      return;
-    }
-    auto sub_select_tuples = sql_event->sub_query_res();
-    //子查询的结果应该只有一个值
-    if (sub_select_tuples.size() == 0 || sub_select_tuples.size() > 1 || sub_select_tuples[0]->cell_num() != 1) {
-      sql_event->session_event()->set_response("FAILURE\n");
-      callback_event(sql_event, nullptr);
-      return;
-    }
-    TupleCell cell;
-    sub_select_tuples[0]->cell_at(0, cell);
-    string new_str = old_str;
-    string value = cell.to_string();
-    if (cell.attr_type() == CHARS || cell.attr_type() == DATES) {
-      value = "'" + value + "'";
-    }
+  auto sub_query_pair =  handle_sub_query(sql_event->sql());
+  auto rebuild = [](string temp){
     string k;
     for (auto ch : temp) {
       if (ch == '(' || ch == ')') k += "\\";
       k += ch;
     }
-    str_replace_by_regex(new_str, "\\([ ]*" + k + "[ ]*\\)", value);
-    old_str = new_str;
-    sql_event->set_sql(new_str.c_str());
-    temp = handle_sub_query(sql_event->sql());
+    return k;
+  };
+  string new_sql = sql_event->sql();
+  while (sub_query_pair.second != SubQueryOper::NO_OPER) {
+    auto sub_query_str = sub_query_pair.first;
+    if (sub_query_pair.second == SubQueryOper::IN || sub_query_pair.second == SubQueryOper::COMPARE) {
+      sql_event->set_sql(string(sub_query_str + ";").c_str());
+      if((rc = handle_request(sql_event, true)) != SUCCESS) {
+        return;
+      }
+      auto sub_select_tuples = sql_event->sub_query_res();
+      if ((sub_query_pair.second == SubQueryOper::IN && (sub_select_tuples.size() == 0 || sub_select_tuples[0]->cell_num() != 1)) ||
+          (sub_query_pair.second == SubQueryOper::COMPARE && (sub_select_tuples.size() != 1 || sub_select_tuples[0]->cell_num() != 1))) {
+        sql_event->session_event()->set_response("FAILURE\n");
+        callback_event(sql_event, nullptr);
+        return;
+      }
+      TupleCell cell;
+      string value;
+      for (int i = 0; i < sub_select_tuples.size(); ++i) {
+        sub_select_tuples[i]->cell_at(0, cell);
+        if (i == sub_select_tuples.size() - 1) {
+          value += cell.to_string();
+        } else {
+          value += cell.to_string() + ",";
+        }
+      }
+      sub_query_str = rebuild(sub_query_str);
+      if (sub_query_pair.second == SubQueryOper::COMPARE) {
+        str_replace_by_regex(new_sql, "\\([ ]*" + sub_query_str + "[ ]*\\)", value);
+      } else {
+        str_replace_by_regex(new_sql, sub_query_str, value);
+      }
+      sql_event->set_sql(new_sql.c_str());
+      sub_query_pair =  handle_sub_query(sql_event->sql());
+    } else if (sub_query_pair.second == SubQueryOper::EXIST) {
+      auto query_temp = query_create();
+      parse(string(sub_query_str + ";").c_str(), query_temp);
+      string relation_name = query_temp->sstr.selection.relations[0].name;
+      vector<string> tables = {relation_name};
+      vector<string> fields;
+      for (int i = 0; i < query_temp->sstr.selection.condition_num; ++i) {
+        auto condition = query_temp->sstr.selection.conditions[i];
+        if (condition.left_type == 2 && condition.left_attr.relation_name != nullptr && string(condition.left_attr.relation_name) != relation_name) {
+          tables.push_back(string(condition.left_attr.relation_name));
+          fields.push_back(string(condition.left_attr.relation_name) + "." + string(condition.left_attr.attribute_name));
+        }
+        if (condition.right_type == 2 && condition.right_attr.relation_name != nullptr && string(condition.right_attr.relation_name) != relation_name) {
+          tables.push_back(string(condition.right_attr.relation_name));
+          fields.push_back(string(condition.right_attr.relation_name) + "." + string(condition.right_attr.attribute_name));
+        }
+      }
+      string sub_str = "select ";
+      for (int i = 0; i < fields.size(); ++i) {
+        if (i == fields.size() - 1) sub_str += (fields[i] + " from ");
+        else sub_str += (fields[i] + ",");
+      }
+      for (int i = 0; i < tables.size(); ++i) {
+        if (i == tables.size() - 1) sub_str += (tables[i] + " ");
+        else sub_str += (tables[i] + ",");
+      }
+      string temp = sub_query_pair.first;
+      str_replace_by_regex(temp, "[Ss][Ee][Ll][Ee][Cc][Tt].*[Ww][Hh][Ee][Rr][Ee]", "");
+      sub_str += "where " + temp;
+      sql_event->set_sql(string(sub_str + ";").c_str());
+      if((rc = handle_request(sql_event, true)) != SUCCESS) {
+        return;
+      }
+      auto sub_select_tuples = sql_event->sub_query_res();
+      vector<string> in_values;
+      for (int field = 0; field < fields.size(); ++field) {
+        TupleCell cell;
+        string value;
+        un
+        for (int i = 0; i < sub_select_tuples.size(); ++i) {
+          sub_select_tuples[i]->cell_at(field, cell);
+          if (i == sub_select_tuples.size() - 1) {
+            value += cell.to_string();
+          } else {
+            value += cell.to_string() + ",";
+          }
+        }
+        in_values.push_back(value);
+      }
+      string replaced_str = fields[0] + " in (" + in_values[0] + ") ";
+      str_replace_by_regex(new_sql, "[Ee][Xx][Ss][Ii][Tt][ ]*" + sub_query_pair.first, replaced_str);
+      sql_event->set_sql(new_sql.c_str());
+      sub_query_pair =  handle_sub_query(sql_event->sql());
+    }
   }
-  sql_event->set_is_sub_query(false);
-  handle(sql_event, false);
+  handle_request(sql_event, false);
+  sql_event->done_immediate();
   LOG_TRACE("Exit\n");
   return;
 }

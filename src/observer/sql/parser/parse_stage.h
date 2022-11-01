@@ -18,6 +18,13 @@ See the Mulan PSL v2 for more details. */
 #include "common/seda/stage.h"
 #include "rc.h"
 
+enum class SubQueryOper {
+  IN,
+  EXIST,
+  COMPARE,
+  NO_OPER
+};
+
 class ParseStage : public common::Stage {
 public:
   ~ParseStage();
