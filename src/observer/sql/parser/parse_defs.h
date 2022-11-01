@@ -85,6 +85,8 @@ typedef enum {
   NOT_LIKE,     //"not like" 7"
   IS,           //"is" 8
   IS_NOT,       //"is not" 9
+  IN,
+  NOT_IN,
   NO_OP
 } CompOp;
 

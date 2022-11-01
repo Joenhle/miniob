@@ -11,6 +11,7 @@
 状态 109冲突：1 项偏移/归约
 状态 110冲突：1 项偏移/归约
 状态 111冲突：1 项偏移/归约
+状态 159冲突：1 项偏移/归约
 
 
 语法
@@ -108,119 +109,128 @@
 
    63 delete: DELETE FROM ID where SEMICOLON
 
-   64 update: UPDATE ID SET ID EQ value where SEMICOLON
+   64 update: UPDATE ID SET ID EQ value more_update where SEMICOLON
 
-   65 select: SELECT select_list FROM rel where group_by having order_by SEMICOLON
+   65 more_update: ε
+   66            | COMMA ID EQ value more_update
 
-   66 select_list: STAR
-   67            | STAR COMMA selects_expression_all
-   68            | selects_expression_all
+   67 select: SELECT select_list FROM rel where group_by having order_by SEMICOLON
 
-   69 selects_expression_all: expr
-   70                       | expr AS ID
-   71                       | selects_expression_all COMMA selects_expression_all
+   68 select_list: STAR
+   69            | STAR COMMA selects_expression_all
+   70            | selects_expression_all
 
-   72 expr: expr PLUS expr
-   73     | expr MINUS expr
-   74     | expr STAR expr
-   75     | expr DIV expr
-   76     | expr NUMBER
-   77     | LBRACE expr RBRACE
-   78     | MINUS expr
-   79     | expr_cell
+   71 selects_expression_all: expr
+   72                       | expr AS ID
+   73                       | selects_expression_all COMMA selects_expression_all
 
-   80 expr_cell: ID
-   81          | ID DOT ID
-   82          | AGGREGATION_FUNC LBRACE ID RBRACE
-   83          | AGGREGATION_FUNC LBRACE ID DOT ID RBRACE
-   84          | AGGREGATION_FUNC LBRACE STAR RBRACE
-   85          | AGGREGATION_FUNC LBRACE number RBRACE
-   86          | value
+   74 expr: expr PLUS expr
+   75     | expr MINUS expr
+   76     | expr STAR expr
+   77     | expr DIV expr
+   78     | expr NUMBER
+   79     | LBRACE expr RBRACE
+   80     | MINUS expr
+   81     | expr_cell
 
-   87 rel: ID rel_list
-   88    | ID AS ID rel_list
+   82 expr_cell: ID
+   83          | ID DOT ID
+   84          | AGGREGATION_FUNC LBRACE ID RBRACE
+   85          | AGGREGATION_FUNC LBRACE ID DOT ID RBRACE
+   86          | AGGREGATION_FUNC LBRACE STAR RBRACE
+   87          | AGGREGATION_FUNC LBRACE number RBRACE
+   88          | value
 
-   89 rel_list: ε
-   90         | COMMA ID rel_list
-   91         | COMMA ID AS ID rel_list
-   92         | INNER JOIN ID rel_list
-   93         | INNER JOIN ID AS ID rel_list
-   94         | INNER JOIN ID ON condition condition_list rel_list
-   95         | INNER JOIN ID AS ID ON condition condition_list rel_list
+   89 rel: ID rel_list
+   90    | ID AS ID rel_list
 
-   96 where: ε
-   97      | WHERE condition condition_list
+   91 rel_list: ε
+   92         | COMMA ID rel_list
+   93         | COMMA ID AS ID rel_list
+   94         | INNER JOIN ID rel_list
+   95         | INNER JOIN ID AS ID rel_list
+   96         | INNER JOIN ID ON condition condition_list rel_list
+   97         | INNER JOIN ID AS ID ON condition condition_list rel_list
 
-   98 condition: condition_expression_all comOp condition_expression_all
+   98 where: ε
+   99      | WHERE condition condition_list
 
-   99 condition_list: ε
-  100               | AND condition condition_list
+  100 condition: condition_expression_all comOp condition_expression_all
 
-  101 having: ε
-  102       | HAVING having_condition having_condition_list
+  101 condition_list: ε
+  102               | AND condition condition_list
 
-  103 having_condition: condition_expression_all comOp condition_expression_all
+  103 having: ε
+  104       | HAVING having_condition having_condition_list
 
-  104 having_condition_list: ε
-  105                      | AND having_condition having_condition_list
+  105 having_condition: condition_expression_all comOp condition_expression_all
 
-  106 group_by: ε
-  107         | GROUP BY ID group_by_rel_list
-  108         | GROUP BY ID DOT ID group_by_rel_list
+  106 having_condition_list: ε
+  107                      | AND having_condition having_condition_list
 
-  109 group_by_rel_list: ε
-  110                  | COMMA ID group_by_rel_list
-  111                  | COMMA ID DOT ID group_by_rel_list
+  108 group_by: ε
+  109         | GROUP BY ID group_by_rel_list
+  110         | GROUP BY ID DOT ID group_by_rel_list
 
-  112 order_by: ε
-  113         | ORDER BY ID od_type order_by_info
-  114         | ORDER BY ID DOT ID od_type order_by_info
+  111 group_by_rel_list: ε
+  112                  | COMMA ID group_by_rel_list
+  113                  | COMMA ID DOT ID group_by_rel_list
 
-  115 od_type: ε
-  116        | ASC
-  117        | DESC
+  114 order_by: ε
+  115         | ORDER BY ID od_type order_by_info
+  116         | ORDER BY ID DOT ID od_type order_by_info
 
-  118 order_by_info: ε
-  119              | COMMA ID od_type order_by_info
-  120              | COMMA ID DOT ID od_type order_by_info
+  117 od_type: ε
+  118        | ASC
+  119        | DESC
 
-  121 condition_expression_all: expr
+  120 order_by_info: ε
+  121              | COMMA ID od_type order_by_info
+  122              | COMMA ID DOT ID od_type order_by_info
 
-  122 comOp: EQ
-  123      | LT
-  124      | GT
-  125      | LE
-  126      | GE
-  127      | NE
-  128      | NOT LIKE_
-  129      | LIKE_
-  130      | IS_ NOT
-  131      | IS_
+  123 condition_expression_all: expr
+  124                         | LBRACE expr expr_list RBRACE
 
-  132 load_data: LOAD DATA INFILE SSS INTO TABLE ID SEMICOLON
+  125 expr_list: ε
+  126          | COMMA expr expr_list
+
+  127 comOp: EQ
+  128      | LT
+  129      | GT
+  130      | LE
+  131      | GE
+  132      | NE
+  133      | NOT LIKE_
+  134      | LIKE_
+  135      | IS_ NOT
+  136      | IS_
+  137      | IN_
+  138      | NOT IN_
+
+  139 load_data: LOAD DATA INFILE SSS INTO TABLE ID SEMICOLON
 
 
 终结语词，附有它们出现处的规则
 
     $end (0) 0
     error (256)
-    SEMICOLON (258) 21 22 23 24 25 26 27 28 29 33 34 35 36 52 63 64 65 132
+    SEMICOLON (258) 21 22 23 24 25 26 27 28 29 33 34 35 36 52 63 64 67 139
     CREATE (259) 33 36
     DROP (260) 27 34
-    TABLE (261) 27 36 132
+    TABLE (261) 27 36 139
     TABLES (262) 28
     INDEX (263) 33 34 35
-    SELECT (264) 65
-    DESC (265) 29 117
-    ASC (266) 116
+    SELECT (264) 67
+    DESC (265) 29 119
+    ASC (266) 118
     SHOW (267) 28 35
     SYNC (268) 23
     INSERT (269) 52
     DELETE (270) 63
     UPDATE (271) 64
-    LBRACE (272) 33 36 39 41 43 53 77 82 83 84 85
-    RBRACE (273) 33 36 39 41 43 53 77 82 83 84 85
-    COMMA (274) 32 38 55 57 67 71 90 91 110 111 119 120
+    LBRACE (272) 33 36 39 41 43 53 79 84 85 86 87 124
+    RBRACE (273) 33 36 39 41 43 53 79 84 85 86 87 124
+    COMMA (274) 32 38 55 57 66 69 73 92 93 112 113 121 122 126
     TRX_BEGIN (275) 24
     TRX_COMMIT (276) 25
     TRX_ROLLBACK (277) 26
@@ -231,204 +241,211 @@
     TEXT_T (282) 50
     HELP (283) 22
     EXIT (284) 21
-    DOT (285) 81 83 108 111 114 120
-    INTO (286) 52 132
+    DOT (285) 83 85 110 113 116 122
+    INTO (286) 52 139
     VALUES (287) 52
-    FROM (288) 35 63 65
-    INNER (289) 92 93 94 95
-    JOIN (290) 92 93 94 95
-    WHERE (291) 97
-    AND (292) 100 105
+    FROM (288) 35 63 67
+    INNER (289) 94 95 96 97
+    JOIN (290) 94 95 96 97
+    WHERE (291) 99
+    AND (292) 102 107
     SET (293) 64
-    ON (294) 33 94 95
-    LOAD (295) 132
-    DATA (296) 132
-    INFILE (297) 132
-    IS_ (298) 130 131
-    NOT (299) 43 44 128 130
-    LIKE_ (300) 128 129
-    GROUP (301) 107 108
-    BY (302) 107 108 113 114
-    ORDER (303) 113 114
-    HAVING (304) 102
-    AS (305) 70 88 91 93 95
-    NULLABLE (306) 41 42
-    NULL_ (307) 43 44 61
-    EQ (308) 64 122
-    LT (309) 123
-    GT (310) 124
-    LE (311) 125
-    GE (312) 126
-    NE (313) 127
-    PLUS (314) 72
-    DIV (315) 75
-    MINUS (316) 73 78
-    NUMBER <number> (317) 45 58 76
-    FLOAT <floats> (318) 59
-    ID <string> (319) 27 29 30 32 33 34 35 36 51 52 63 64 70 80 81 82 83 87 88 90 91 92 93 94 95 107 108 110 111 113 114 119 120 132
-    AGGREGATION_FUNC <string> (320) 82 83 84 85
-    AGGREGATION_FUNC_VALUE <string> (321)
-    PATH <string> (322)
-    SSS <string> (323) 62 132
-    STAR <string> (324) 66 67 74 84
-    STRING_V <string> (325)
-    DATE_STR <string> (326) 60
-    U_neg (327)
+    ON (294) 33 96 97
+    LOAD (295) 139
+    DATA (296) 139
+    INFILE (297) 139
+    IS_ (298) 135 136
+    IN_ (299) 137 138
+    NOT (300) 43 44 133 135 138
+    LIKE_ (301) 133 134
+    GROUP (302) 109 110
+    BY (303) 109 110 115 116
+    ORDER (304) 115 116
+    HAVING (305) 104
+    AS (306) 72 90 93 95 97
+    NULLABLE (307) 41 42
+    NULL_ (308) 43 44 61
+    EQ (309) 64 66 127
+    LT (310) 128
+    GT (311) 129
+    LE (312) 130
+    GE (313) 131
+    NE (314) 132
+    PLUS (315) 74
+    DIV (316) 77
+    MINUS (317) 75 80
+    NUMBER <number> (318) 45 58 78
+    FLOAT <floats> (319) 59
+    ID <string> (320) 27 29 30 32 33 34 35 36 51 52 63 64 66 72 82 83 84 85 89 90 92 93 94 95 96 97 109 110 112 113 115 116 121 122 139
+    AGGREGATION_FUNC <string> (321) 84 85 86 87
+    AGGREGATION_FUNC_VALUE <string> (322)
+    PATH <string> (323)
+    SSS <string> (324) 62 139
+    STAR <string> (325) 68 69 76 86
+    STRING_V <string> (326)
+    DATE_STR <string> (327) 60
+    U_neg (328)
 
 
 非终结语词，附有它们出现处的规则
 
-    $accept (73)
+    $accept (74)
         on left: 0
-    commands (74)
+    commands (75)
         on left: 1 2
         on right: 0 2
-    command (75)
+    command (76)
         on left: 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
         on right: 2
-    exit (76)
+    exit (77)
         on left: 21
         on right: 20
-    help (77)
+    help (78)
         on left: 22
         on right: 19
-    sync (78)
+    sync (79)
         on left: 23
         on right: 14
-    begin (79)
+    begin (80)
         on left: 24
         on right: 15
-    commit (80)
+    commit (81)
         on left: 25
         on right: 16
-    rollback (81)
+    rollback (82)
         on left: 26
         on right: 17
-    drop_table (82)
+    drop_table (83)
         on left: 27
         on right: 8
-    show_tables (83)
+    show_tables (84)
         on left: 28
         on right: 9
-    desc_table (84)
+    desc_table (85)
         on left: 29
         on right: 10
-    index_field_list (85)
+    index_field_list (86)
         on left: 30
         on right: 33
-    index_field_list_ (86)
+    index_field_list_ (87)
         on left: 31 32
         on right: 30 32
-    create_index (87)
+    create_index (88)
         on left: 33
         on right: 11
-    drop_index (88)
+    drop_index (89)
         on left: 34
         on right: 12
-    show_index (89)
+    show_index (90)
         on left: 35
         on right: 13
-    create_table (90)
+    create_table (91)
         on left: 36
         on right: 7
-    attr_def_list (91)
+    attr_def_list (92)
         on left: 37 38
         on right: 36 38
-    attr_def (92)
+    attr_def (93)
         on left: 39 40 41 42 43 44
         on right: 36 38
-    number <number> (93)
+    number <number> (94)
         on left: 45
-        on right: 39 41 43 85
-    type <number> (94)
+        on right: 39 41 43 87
+    type <number> (95)
         on left: 46 47 48 49 50
         on right: 39 40 41 42 43 44
-    ID_get (95)
+    ID_get (96)
         on left: 51
         on right: 39 40 41 42 43 44
-    insert (96)
+    insert (97)
         on left: 52
         on right: 4
-    value_tuple (97)
+    value_tuple (98)
         on left: 53
         on right: 52 55
-    value_tuple_list (98)
+    value_tuple_list (99)
         on left: 54 55
         on right: 52 55
-    value_list (99)
+    value_list (100)
         on left: 56 57
         on right: 53 57
-    value <value1> (100)
+    value <value1> (101)
         on left: 58 59 60 61 62
-        on right: 53 57 64 86
-    delete (101)
+        on right: 53 57 64 66 88
+    delete (102)
         on left: 63
         on right: 6
-    update (102)
+    update (103)
         on left: 64
         on right: 5
-    select (103)
-        on left: 65
+    more_update (104)
+        on left: 65 66
+        on right: 64 66
+    select (105)
+        on left: 67
         on right: 3
-    select_list (104)
-        on left: 66 67 68
-        on right: 65
-    selects_expression_all (105)
-        on left: 69 70 71
-        on right: 67 68 71
-    expr (106)
-        on left: 72 73 74 75 76 77 78 79
-        on right: 69 70 72 73 74 75 76 77 78 121
-    expr_cell (107)
-        on left: 80 81 82 83 84 85 86
-        on right: 79
-    rel (108)
-        on left: 87 88
-        on right: 65
-    rel_list (109)
-        on left: 89 90 91 92 93 94 95
-        on right: 87 88 90 91 92 93 94 95
-    where (110)
-        on left: 96 97
-        on right: 63 64 65
-    condition <condition1> (111)
-        on left: 98
-        on right: 94 95 97 100
-    condition_list (112)
-        on left: 99 100
-        on right: 94 95 97 100
-    having (113)
+    select_list (106)
+        on left: 68 69 70
+        on right: 67
+    selects_expression_all (107)
+        on left: 71 72 73
+        on right: 69 70 73
+    expr (108)
+        on left: 74 75 76 77 78 79 80 81
+        on right: 71 72 74 75 76 77 78 79 80 123 124 126
+    expr_cell (109)
+        on left: 82 83 84 85 86 87 88
+        on right: 81
+    rel (110)
+        on left: 89 90
+        on right: 67
+    rel_list (111)
+        on left: 91 92 93 94 95 96 97
+        on right: 89 90 92 93 94 95 96 97
+    where (112)
+        on left: 98 99
+        on right: 63 64 67
+    condition <condition1> (113)
+        on left: 100
+        on right: 96 97 99 102
+    condition_list (114)
         on left: 101 102
-        on right: 65
-    having_condition (114)
-        on left: 103
-        on right: 102 105
-    having_condition_list (115)
-        on left: 104 105
-        on right: 102 105
-    group_by (116)
-        on left: 106 107 108
-        on right: 65
-    group_by_rel_list (117)
-        on left: 109 110 111
-        on right: 107 108 110 111
-    order_by (118)
-        on left: 112 113 114
-        on right: 65
-    od_type <number> (119)
-        on left: 115 116 117
-        on right: 113 114 119 120
-    order_by_info (120)
-        on left: 118 119 120
-        on right: 113 114 119 120
-    condition_expression_all (121)
-        on left: 121
-        on right: 98 103
-    comOp (122)
-        on left: 122 123 124 125 126 127 128 129 130 131
-        on right: 98 103
-    load_data (123)
-        on left: 132
+        on right: 96 97 99 102
+    having (115)
+        on left: 103 104
+        on right: 67
+    having_condition (116)
+        on left: 105
+        on right: 104 107
+    having_condition_list (117)
+        on left: 106 107
+        on right: 104 107
+    group_by (118)
+        on left: 108 109 110
+        on right: 67
+    group_by_rel_list (119)
+        on left: 111 112 113
+        on right: 109 110 112 113
+    order_by (120)
+        on left: 114 115 116
+        on right: 67
+    od_type <number> (121)
+        on left: 117 118 119
+        on right: 115 116 121 122
+    order_by_info (122)
+        on left: 120 121 122
+        on right: 115 116 121 122
+    condition_expression_all (123)
+        on left: 123 124
+        on right: 100 105
+    expr_list (124)
+        on left: 125 126
+        on right: 124 126
+    comOp (125)
+        on left: 127 128 129 130 131 132 133 134 135 136 137 138
+        on right: 100 105
+    load_data (126)
+        on left: 139
         on right: 18
 
 
@@ -511,7 +528,7 @@
 
 状态 5
 
-   65 select: SELECT • select_list FROM rel where group_by having order_by SEMICOLON
+   67 select: SELECT • select_list FROM rel where group_by having order_by SEMICOLON
 
     LBRACE            偏移，并进入状态 41
     NULL_             偏移，并进入状态 42
@@ -570,7 +587,7 @@
 
 状态 11
 
-   64 update: UPDATE • ID SET ID EQ value where SEMICOLON
+   64 update: UPDATE • ID SET ID EQ value more_update where SEMICOLON
 
     ID  偏移，并进入状态 62
 
@@ -612,7 +629,7 @@
 
 状态 17
 
-  132 load_data: LOAD • DATA INFILE SSS INTO TABLE ID SEMICOLON
+  139 load_data: LOAD • DATA INFILE SSS INTO TABLE ID SEMICOLON
 
     DATA  偏移，并进入状态 68
 
@@ -780,7 +797,7 @@
 
 状态 41
 
-   77 expr: LBRACE • expr RBRACE
+   79 expr: LBRACE • expr RBRACE
 
     LBRACE            偏移，并进入状态 41
     NULL_             偏移，并进入状态 42
@@ -806,7 +823,7 @@
 
 状态 43
 
-   78 expr: MINUS • expr
+   80 expr: MINUS • expr
 
     LBRACE            偏移，并进入状态 41
     NULL_             偏移，并进入状态 42
@@ -839,20 +856,20 @@
 
 状态 46
 
-   80 expr_cell: ID •
-   81          | ID • DOT ID
+   82 expr_cell: ID •
+   83          | ID • DOT ID
 
     DOT  偏移，并进入状态 75
 
-    $default  使用规则 80 以归约 (expr_cell)
+    $default  使用规则 82 以归约 (expr_cell)
 
 
 状态 47
 
-   82 expr_cell: AGGREGATION_FUNC • LBRACE ID RBRACE
-   83          | AGGREGATION_FUNC • LBRACE ID DOT ID RBRACE
-   84          | AGGREGATION_FUNC • LBRACE STAR RBRACE
-   85          | AGGREGATION_FUNC • LBRACE number RBRACE
+   84 expr_cell: AGGREGATION_FUNC • LBRACE ID RBRACE
+   85          | AGGREGATION_FUNC • LBRACE ID DOT ID RBRACE
+   86          | AGGREGATION_FUNC • LBRACE STAR RBRACE
+   87          | AGGREGATION_FUNC • LBRACE number RBRACE
 
     LBRACE  偏移，并进入状态 76
 
@@ -866,12 +883,12 @@
 
 状态 49
 
-   66 select_list: STAR •
-   67            | STAR • COMMA selects_expression_all
+   68 select_list: STAR •
+   69            | STAR • COMMA selects_expression_all
 
     COMMA  偏移，并进入状态 77
 
-    $default  使用规则 66 以归约 (select_list)
+    $default  使用规则 68 以归约 (select_list)
 
 
 状态 50
@@ -883,37 +900,37 @@
 
 状态 51
 
-   86 expr_cell: value •
+   88 expr_cell: value •
 
-    $default  使用规则 86 以归约 (expr_cell)
+    $default  使用规则 88 以归约 (expr_cell)
 
 
 状态 52
 
-   65 select: SELECT select_list • FROM rel where group_by having order_by SEMICOLON
+   67 select: SELECT select_list • FROM rel where group_by having order_by SEMICOLON
 
     FROM  偏移，并进入状态 78
 
 
 状态 53
 
-   68 select_list: selects_expression_all •
-   71 selects_expression_all: selects_expression_all • COMMA selects_expression_all
+   70 select_list: selects_expression_all •
+   73 selects_expression_all: selects_expression_all • COMMA selects_expression_all
 
     COMMA  偏移，并进入状态 79
 
-    $default  使用规则 68 以归约 (select_list)
+    $default  使用规则 70 以归约 (select_list)
 
 
 状态 54
 
-   69 selects_expression_all: expr •
-   70                       | expr • AS ID
-   72 expr: expr • PLUS expr
-   73     | expr • MINUS expr
-   74     | expr • STAR expr
-   75     | expr • DIV expr
-   76     | expr • NUMBER
+   71 selects_expression_all: expr •
+   72                       | expr • AS ID
+   74 expr: expr • PLUS expr
+   75     | expr • MINUS expr
+   76     | expr • STAR expr
+   77     | expr • DIV expr
+   78     | expr • NUMBER
 
     AS      偏移，并进入状态 80
     PLUS    偏移，并进入状态 81
@@ -922,14 +939,14 @@
     NUMBER  偏移，并进入状态 84
     STAR    偏移，并进入状态 85
 
-    $default  使用规则 69 以归约 (selects_expression_all)
+    $default  使用规则 71 以归约 (selects_expression_all)
 
 
 状态 55
 
-   79 expr: expr_cell •
+   81 expr: expr_cell •
 
-    $default  使用规则 79 以归约 (expr)
+    $default  使用规则 81 以归约 (expr)
 
 
 状态 56
@@ -976,7 +993,7 @@
 
 状态 62
 
-   64 update: UPDATE ID • SET ID EQ value where SEMICOLON
+   64 update: UPDATE ID • SET ID EQ value more_update where SEMICOLON
 
     SET  偏移，并进入状态 91
 
@@ -1018,7 +1035,7 @@
 
 状态 68
 
-  132 load_data: LOAD DATA • INFILE SSS INTO TABLE ID SEMICOLON
+  139 load_data: LOAD DATA • INFILE SSS INTO TABLE ID SEMICOLON
 
     INFILE  偏移，并进入状态 92
 
@@ -1053,12 +1070,12 @@
 
 状态 73
 
-   72 expr: expr • PLUS expr
-   73     | expr • MINUS expr
-   74     | expr • STAR expr
-   75     | expr • DIV expr
-   76     | expr • NUMBER
-   77     | LBRACE expr • RBRACE
+   74 expr: expr • PLUS expr
+   75     | expr • MINUS expr
+   76     | expr • STAR expr
+   77     | expr • DIV expr
+   78     | expr • NUMBER
+   79     | LBRACE expr • RBRACE
 
     RBRACE  偏移，并进入状态 97
     PLUS    偏移，并进入状态 81
@@ -1070,32 +1087,32 @@
 
 状态 74
 
-   72 expr: expr • PLUS expr
-   73     | expr • MINUS expr
-   74     | expr • STAR expr
-   75     | expr • DIV expr
-   76     | expr • NUMBER
-   78     | MINUS expr •
+   74 expr: expr • PLUS expr
+   75     | expr • MINUS expr
+   76     | expr • STAR expr
+   77     | expr • DIV expr
+   78     | expr • NUMBER
+   80     | MINUS expr •
 
     NUMBER  偏移，并进入状态 84
 
-    NUMBER    [使用规则 78 以归约 (expr)]
-    $default  使用规则 78 以归约 (expr)
+    NUMBER    [使用规则 80 以归约 (expr)]
+    $default  使用规则 80 以归约 (expr)
 
 
 状态 75
 
-   81 expr_cell: ID DOT • ID
+   83 expr_cell: ID DOT • ID
 
     ID  偏移，并进入状态 98
 
 
 状态 76
 
-   82 expr_cell: AGGREGATION_FUNC LBRACE • ID RBRACE
-   83          | AGGREGATION_FUNC LBRACE • ID DOT ID RBRACE
-   84          | AGGREGATION_FUNC LBRACE • STAR RBRACE
-   85          | AGGREGATION_FUNC LBRACE • number RBRACE
+   84 expr_cell: AGGREGATION_FUNC LBRACE • ID RBRACE
+   85          | AGGREGATION_FUNC LBRACE • ID DOT ID RBRACE
+   86          | AGGREGATION_FUNC LBRACE • STAR RBRACE
+   87          | AGGREGATION_FUNC LBRACE • number RBRACE
 
     NUMBER  偏移，并进入状态 99
     ID      偏移，并进入状态 100
@@ -1106,7 +1123,7 @@
 
 状态 77
 
-   67 select_list: STAR COMMA • selects_expression_all
+   69 select_list: STAR COMMA • selects_expression_all
 
     LBRACE            偏移，并进入状态 41
     NULL_             偏移，并进入状态 42
@@ -1126,7 +1143,7 @@
 
 状态 78
 
-   65 select: SELECT select_list FROM • rel where group_by having order_by SEMICOLON
+   67 select: SELECT select_list FROM • rel where group_by having order_by SEMICOLON
 
     ID  偏移，并进入状态 104
 
@@ -1135,7 +1152,7 @@
 
 状态 79
 
-   71 selects_expression_all: selects_expression_all COMMA • selects_expression_all
+   73 selects_expression_all: selects_expression_all COMMA • selects_expression_all
 
     LBRACE            偏移，并进入状态 41
     NULL_             偏移，并进入状态 42
@@ -1155,14 +1172,14 @@
 
 状态 80
 
-   70 selects_expression_all: expr AS • ID
+   72 selects_expression_all: expr AS • ID
 
     ID  偏移，并进入状态 107
 
 
 状态 81
 
-   72 expr: expr PLUS • expr
+   74 expr: expr PLUS • expr
 
     LBRACE            偏移，并进入状态 41
     NULL_             偏移，并进入状态 42
@@ -1181,7 +1198,7 @@
 
 状态 82
 
-   75 expr: expr DIV • expr
+   77 expr: expr DIV • expr
 
     LBRACE            偏移，并进入状态 41
     NULL_             偏移，并进入状态 42
@@ -1200,7 +1217,7 @@
 
 状态 83
 
-   73 expr: expr MINUS • expr
+   75 expr: expr MINUS • expr
 
     LBRACE            偏移，并进入状态 41
     NULL_             偏移，并进入状态 42
@@ -1219,14 +1236,14 @@
 
 状态 84
 
-   76 expr: expr NUMBER •
+   78 expr: expr NUMBER •
 
-    $default  使用规则 76 以归约 (expr)
+    $default  使用规则 78 以归约 (expr)
 
 
 状态 85
 
-   74 expr: expr STAR • expr
+   76 expr: expr STAR • expr
 
     LBRACE            偏移，并进入状态 41
     NULL_             偏移，并进入状态 42
@@ -1277,21 +1294,21 @@
 
     WHERE  偏移，并进入状态 114
 
-    $default  使用规则 96 以归约 (where)
+    $default  使用规则 98 以归约 (where)
 
     where  转到状态 115
 
 
 状态 91
 
-   64 update: UPDATE ID SET • ID EQ value where SEMICOLON
+   64 update: UPDATE ID SET • ID EQ value more_update where SEMICOLON
 
     ID  偏移，并进入状态 116
 
 
 状态 92
 
-  132 load_data: LOAD DATA INFILE • SSS INTO TABLE ID SEMICOLON
+  139 load_data: LOAD DATA INFILE • SSS INTO TABLE ID SEMICOLON
 
     SSS  偏移，并进入状态 117
 
@@ -1329,16 +1346,16 @@
 
 状态 97
 
-   77 expr: LBRACE expr RBRACE •
+   79 expr: LBRACE expr RBRACE •
 
-    $default  使用规则 77 以归约 (expr)
+    $default  使用规则 79 以归约 (expr)
 
 
 状态 98
 
-   81 expr_cell: ID DOT ID •
+   83 expr_cell: ID DOT ID •
 
-    $default  使用规则 81 以归约 (expr_cell)
+    $default  使用规则 83 以归约 (expr_cell)
 
 
 状态 99
@@ -1350,8 +1367,8 @@
 
 状态 100
 
-   82 expr_cell: AGGREGATION_FUNC LBRACE ID • RBRACE
-   83          | AGGREGATION_FUNC LBRACE ID • DOT ID RBRACE
+   84 expr_cell: AGGREGATION_FUNC LBRACE ID • RBRACE
+   85          | AGGREGATION_FUNC LBRACE ID • DOT ID RBRACE
 
     RBRACE  偏移，并进入状态 122
     DOT     偏移，并进入状态 123
@@ -1359,133 +1376,133 @@
 
 状态 101
 
-   84 expr_cell: AGGREGATION_FUNC LBRACE STAR • RBRACE
+   86 expr_cell: AGGREGATION_FUNC LBRACE STAR • RBRACE
 
     RBRACE  偏移，并进入状态 124
 
 
 状态 102
 
-   85 expr_cell: AGGREGATION_FUNC LBRACE number • RBRACE
+   87 expr_cell: AGGREGATION_FUNC LBRACE number • RBRACE
 
     RBRACE  偏移，并进入状态 125
 
 
 状态 103
 
-   67 select_list: STAR COMMA selects_expression_all •
-   71 selects_expression_all: selects_expression_all • COMMA selects_expression_all
+   69 select_list: STAR COMMA selects_expression_all •
+   73 selects_expression_all: selects_expression_all • COMMA selects_expression_all
 
     COMMA  偏移，并进入状态 79
 
-    $default  使用规则 67 以归约 (select_list)
+    $default  使用规则 69 以归约 (select_list)
 
 
 状态 104
 
-   87 rel: ID • rel_list
-   88    | ID • AS ID rel_list
+   89 rel: ID • rel_list
+   90    | ID • AS ID rel_list
 
     COMMA  偏移，并进入状态 126
     INNER  偏移，并进入状态 127
     AS     偏移，并进入状态 128
 
-    $default  使用规则 89 以归约 (rel_list)
+    $default  使用规则 91 以归约 (rel_list)
 
     rel_list  转到状态 129
 
 
 状态 105
 
-   65 select: SELECT select_list FROM rel • where group_by having order_by SEMICOLON
+   67 select: SELECT select_list FROM rel • where group_by having order_by SEMICOLON
 
     WHERE  偏移，并进入状态 114
 
-    $default  使用规则 96 以归约 (where)
+    $default  使用规则 98 以归约 (where)
 
     where  转到状态 130
 
 
 状态 106
 
-   71 selects_expression_all: selects_expression_all • COMMA selects_expression_all
-   71                       | selects_expression_all COMMA selects_expression_all •
+   73 selects_expression_all: selects_expression_all • COMMA selects_expression_all
+   73                       | selects_expression_all COMMA selects_expression_all •
 
     COMMA  偏移，并进入状态 79
 
-    COMMA     [使用规则 71 以归约 (selects_expression_all)]
-    $default  使用规则 71 以归约 (selects_expression_all)
+    COMMA     [使用规则 73 以归约 (selects_expression_all)]
+    $default  使用规则 73 以归约 (selects_expression_all)
 
 
 状态 107
 
-   70 selects_expression_all: expr AS ID •
+   72 selects_expression_all: expr AS ID •
 
-    $default  使用规则 70 以归约 (selects_expression_all)
+    $default  使用规则 72 以归约 (selects_expression_all)
 
 
 状态 108
 
-   72 expr: expr • PLUS expr
-   72     | expr PLUS expr •
-   73     | expr • MINUS expr
-   74     | expr • STAR expr
-   75     | expr • DIV expr
-   76     | expr • NUMBER
+   74 expr: expr • PLUS expr
+   74     | expr PLUS expr •
+   75     | expr • MINUS expr
+   76     | expr • STAR expr
+   77     | expr • DIV expr
+   78     | expr • NUMBER
 
     DIV     偏移，并进入状态 82
     NUMBER  偏移，并进入状态 84
     STAR    偏移，并进入状态 85
 
-    NUMBER    [使用规则 72 以归约 (expr)]
-    $default  使用规则 72 以归约 (expr)
+    NUMBER    [使用规则 74 以归约 (expr)]
+    $default  使用规则 74 以归约 (expr)
 
 
 状态 109
 
-   72 expr: expr • PLUS expr
-   73     | expr • MINUS expr
-   74     | expr • STAR expr
-   75     | expr • DIV expr
-   75     | expr DIV expr •
-   76     | expr • NUMBER
+   74 expr: expr • PLUS expr
+   75     | expr • MINUS expr
+   76     | expr • STAR expr
+   77     | expr • DIV expr
+   77     | expr DIV expr •
+   78     | expr • NUMBER
 
     NUMBER  偏移，并进入状态 84
+
+    NUMBER    [使用规则 77 以归约 (expr)]
+    $default  使用规则 77 以归约 (expr)
+
+
+状态 110
+
+   74 expr: expr • PLUS expr
+   75     | expr • MINUS expr
+   75     | expr MINUS expr •
+   76     | expr • STAR expr
+   77     | expr • DIV expr
+   78     | expr • NUMBER
+
+    DIV     偏移，并进入状态 82
+    NUMBER  偏移，并进入状态 84
+    STAR    偏移，并进入状态 85
 
     NUMBER    [使用规则 75 以归约 (expr)]
     $default  使用规则 75 以归约 (expr)
 
 
-状态 110
-
-   72 expr: expr • PLUS expr
-   73     | expr • MINUS expr
-   73     | expr MINUS expr •
-   74     | expr • STAR expr
-   75     | expr • DIV expr
-   76     | expr • NUMBER
-
-    DIV     偏移，并进入状态 82
-    NUMBER  偏移，并进入状态 84
-    STAR    偏移，并进入状态 85
-
-    NUMBER    [使用规则 73 以归约 (expr)]
-    $default  使用规则 73 以归约 (expr)
-
-
 状态 111
 
-   72 expr: expr • PLUS expr
-   73     | expr • MINUS expr
-   74     | expr • STAR expr
-   74     | expr STAR expr •
-   75     | expr • DIV expr
-   76     | expr • NUMBER
+   74 expr: expr • PLUS expr
+   75     | expr • MINUS expr
+   76     | expr • STAR expr
+   76     | expr STAR expr •
+   77     | expr • DIV expr
+   78     | expr • NUMBER
 
     NUMBER  偏移，并进入状态 84
 
-    NUMBER    [使用规则 74 以归约 (expr)]
-    $default  使用规则 74 以归约 (expr)
+    NUMBER    [使用规则 76 以归约 (expr)]
+    $default  使用规则 76 以归约 (expr)
 
 
 状态 112
@@ -1506,9 +1523,9 @@
 
 状态 114
 
-   97 where: WHERE • condition condition_list
+   99 where: WHERE • condition condition_list
 
-    LBRACE            偏移，并进入状态 41
+    LBRACE            偏移，并进入状态 134
     NULL_             偏移，并进入状态 42
     MINUS             偏移，并进入状态 43
     NUMBER            偏移，并进入状态 44
@@ -1519,31 +1536,31 @@
     DATE_STR          偏移，并进入状态 50
 
     value                     转到状态 51
-    expr                      转到状态 134
+    expr                      转到状态 135
     expr_cell                 转到状态 55
-    condition                 转到状态 135
-    condition_expression_all  转到状态 136
+    condition                 转到状态 136
+    condition_expression_all  转到状态 137
 
 
 状态 115
 
    63 delete: DELETE FROM ID where • SEMICOLON
 
-    SEMICOLON  偏移，并进入状态 137
+    SEMICOLON  偏移，并进入状态 138
 
 
 状态 116
 
-   64 update: UPDATE ID SET ID • EQ value where SEMICOLON
+   64 update: UPDATE ID SET ID • EQ value more_update where SEMICOLON
 
-    EQ  偏移，并进入状态 138
+    EQ  偏移，并进入状态 139
 
 
 状态 117
 
-  132 load_data: LOAD DATA INFILE SSS • INTO TABLE ID SEMICOLON
+  139 load_data: LOAD DATA INFILE SSS • INTO TABLE ID SEMICOLON
 
-    INTO  偏移，并进入状态 139
+    INTO  偏移，并进入状态 140
 
 
 状态 118
@@ -1557,11 +1574,11 @@
 
    36 create_table: CREATE TABLE ID LBRACE attr_def • attr_def_list RBRACE SEMICOLON
 
-    COMMA  偏移，并进入状态 140
+    COMMA  偏移，并进入状态 141
 
     $default  使用规则 37 以归约 (attr_def_list)
 
-    attr_def_list  转到状态 141
+    attr_def_list  转到状态 142
 
 
 状态 120
@@ -1573,91 +1590,91 @@
    43         | ID_get • type NOT NULL_ LBRACE number RBRACE
    44         | ID_get • type NOT NULL_
 
-    DATE_T    偏移，并进入状态 142
-    INT_T     偏移，并进入状态 143
-    STRING_T  偏移，并进入状态 144
-    FLOAT_T   偏移，并进入状态 145
-    TEXT_T    偏移，并进入状态 146
+    DATE_T    偏移，并进入状态 143
+    INT_T     偏移，并进入状态 144
+    STRING_T  偏移，并进入状态 145
+    FLOAT_T   偏移，并进入状态 146
+    TEXT_T    偏移，并进入状态 147
 
-    type  转到状态 147
+    type  转到状态 148
 
 
 状态 121
 
    33 create_index: CREATE INDEX ID ON ID • LBRACE index_field_list RBRACE SEMICOLON
 
-    LBRACE  偏移，并进入状态 148
+    LBRACE  偏移，并进入状态 149
 
 
 状态 122
 
-   82 expr_cell: AGGREGATION_FUNC LBRACE ID RBRACE •
-
-    $default  使用规则 82 以归约 (expr_cell)
-
-
-状态 123
-
-   83 expr_cell: AGGREGATION_FUNC LBRACE ID DOT • ID RBRACE
-
-    ID  偏移，并进入状态 149
-
-
-状态 124
-
-   84 expr_cell: AGGREGATION_FUNC LBRACE STAR RBRACE •
+   84 expr_cell: AGGREGATION_FUNC LBRACE ID RBRACE •
 
     $default  使用规则 84 以归约 (expr_cell)
 
 
-状态 125
+状态 123
 
-   85 expr_cell: AGGREGATION_FUNC LBRACE number RBRACE •
-
-    $default  使用规则 85 以归约 (expr_cell)
-
-
-状态 126
-
-   90 rel_list: COMMA • ID rel_list
-   91         | COMMA • ID AS ID rel_list
+   85 expr_cell: AGGREGATION_FUNC LBRACE ID DOT • ID RBRACE
 
     ID  偏移，并进入状态 150
 
 
+状态 124
+
+   86 expr_cell: AGGREGATION_FUNC LBRACE STAR RBRACE •
+
+    $default  使用规则 86 以归约 (expr_cell)
+
+
+状态 125
+
+   87 expr_cell: AGGREGATION_FUNC LBRACE number RBRACE •
+
+    $default  使用规则 87 以归约 (expr_cell)
+
+
+状态 126
+
+   92 rel_list: COMMA • ID rel_list
+   93         | COMMA • ID AS ID rel_list
+
+    ID  偏移，并进入状态 151
+
+
 状态 127
 
-   92 rel_list: INNER • JOIN ID rel_list
-   93         | INNER • JOIN ID AS ID rel_list
-   94         | INNER • JOIN ID ON condition condition_list rel_list
-   95         | INNER • JOIN ID AS ID ON condition condition_list rel_list
+   94 rel_list: INNER • JOIN ID rel_list
+   95         | INNER • JOIN ID AS ID rel_list
+   96         | INNER • JOIN ID ON condition condition_list rel_list
+   97         | INNER • JOIN ID AS ID ON condition condition_list rel_list
 
-    JOIN  偏移，并进入状态 151
+    JOIN  偏移，并进入状态 152
 
 
 状态 128
 
-   88 rel: ID AS • ID rel_list
+   90 rel: ID AS • ID rel_list
 
-    ID  偏移，并进入状态 152
+    ID  偏移，并进入状态 153
 
 
 状态 129
 
-   87 rel: ID rel_list •
+   89 rel: ID rel_list •
 
-    $default  使用规则 87 以归约 (rel)
+    $default  使用规则 89 以归约 (rel)
 
 
 状态 130
 
-   65 select: SELECT select_list FROM rel where • group_by having order_by SEMICOLON
+   67 select: SELECT select_list FROM rel where • group_by having order_by SEMICOLON
 
-    GROUP  偏移，并进入状态 153
+    GROUP  偏移，并进入状态 154
 
-    $default  使用规则 106 以归约 (group_by)
+    $default  使用规则 108 以归约 (group_by)
 
-    group_by  转到状态 154
+    group_by  转到状态 155
 
 
 状态 131
@@ -1677,28 +1694,48 @@
     SSS       偏移，并进入状态 48
     DATE_STR  偏移，并进入状态 50
 
-    value  转到状态 155
+    value  转到状态 156
 
 
 状态 133
 
    52 insert: INSERT INTO ID VALUES value_tuple • value_tuple_list SEMICOLON
 
-    COMMA  偏移，并进入状态 156
+    COMMA  偏移，并进入状态 157
 
     $default  使用规则 54 以归约 (value_tuple_list)
 
-    value_tuple_list  转到状态 157
+    value_tuple_list  转到状态 158
 
 
 状态 134
 
-   72 expr: expr • PLUS expr
-   73     | expr • MINUS expr
-   74     | expr • STAR expr
-   75     | expr • DIV expr
-   76     | expr • NUMBER
-  121 condition_expression_all: expr •
+   79 expr: LBRACE • expr RBRACE
+  124 condition_expression_all: LBRACE • expr expr_list RBRACE
+
+    LBRACE            偏移，并进入状态 41
+    NULL_             偏移，并进入状态 42
+    MINUS             偏移，并进入状态 43
+    NUMBER            偏移，并进入状态 44
+    FLOAT             偏移，并进入状态 45
+    ID                偏移，并进入状态 46
+    AGGREGATION_FUNC  偏移，并进入状态 47
+    SSS               偏移，并进入状态 48
+    DATE_STR          偏移，并进入状态 50
+
+    value      转到状态 51
+    expr       转到状态 159
+    expr_cell  转到状态 55
+
+
+状态 135
+
+   74 expr: expr • PLUS expr
+   75     | expr • MINUS expr
+   76     | expr • STAR expr
+   77     | expr • DIV expr
+   78     | expr • NUMBER
+  123 condition_expression_all: expr •
 
     PLUS    偏移，并进入状态 81
     DIV     偏移，并进入状态 82
@@ -1706,47 +1743,48 @@
     NUMBER  偏移，并进入状态 84
     STAR    偏移，并进入状态 85
 
-    $default  使用规则 121 以归约 (condition_expression_all)
-
-
-状态 135
-
-   97 where: WHERE condition • condition_list
-
-    AND  偏移，并进入状态 158
-
-    $default  使用规则 99 以归约 (condition_list)
-
-    condition_list  转到状态 159
+    $default  使用规则 123 以归约 (condition_expression_all)
 
 
 状态 136
 
-   98 condition: condition_expression_all • comOp condition_expression_all
+   99 where: WHERE condition • condition_list
 
-    IS_    偏移，并进入状态 160
-    NOT    偏移，并进入状态 161
-    LIKE_  偏移，并进入状态 162
-    EQ     偏移，并进入状态 163
-    LT     偏移，并进入状态 164
-    GT     偏移，并进入状态 165
-    LE     偏移，并进入状态 166
-    GE     偏移，并进入状态 167
-    NE     偏移，并进入状态 168
+    AND  偏移，并进入状态 160
 
-    comOp  转到状态 169
+    $default  使用规则 101 以归约 (condition_list)
+
+    condition_list  转到状态 161
 
 
 状态 137
+
+  100 condition: condition_expression_all • comOp condition_expression_all
+
+    IS_    偏移，并进入状态 162
+    IN_    偏移，并进入状态 163
+    NOT    偏移，并进入状态 164
+    LIKE_  偏移，并进入状态 165
+    EQ     偏移，并进入状态 166
+    LT     偏移，并进入状态 167
+    GT     偏移，并进入状态 168
+    LE     偏移，并进入状态 169
+    GE     偏移，并进入状态 170
+    NE     偏移，并进入状态 171
+
+    comOp  转到状态 172
+
+
+状态 138
 
    63 delete: DELETE FROM ID where SEMICOLON •
 
     $default  使用规则 63 以归约 (delete)
 
 
-状态 138
+状态 139
 
-   64 update: UPDATE ID SET ID EQ • value where SEMICOLON
+   64 update: UPDATE ID SET ID EQ • value more_update where SEMICOLON
 
     NULL_     偏移，并进入状态 42
     NUMBER    偏移，并进入状态 44
@@ -1754,69 +1792,69 @@
     SSS       偏移，并进入状态 48
     DATE_STR  偏移，并进入状态 50
 
-    value  转到状态 170
-
-
-状态 139
-
-  132 load_data: LOAD DATA INFILE SSS INTO • TABLE ID SEMICOLON
-
-    TABLE  偏移，并进入状态 171
+    value  转到状态 173
 
 
 状态 140
+
+  139 load_data: LOAD DATA INFILE SSS INTO • TABLE ID SEMICOLON
+
+    TABLE  偏移，并进入状态 174
+
+
+状态 141
 
    38 attr_def_list: COMMA • attr_def attr_def_list
 
     ID  偏移，并进入状态 118
 
-    attr_def  转到状态 172
+    attr_def  转到状态 175
     ID_get    转到状态 120
 
 
-状态 141
+状态 142
 
    36 create_table: CREATE TABLE ID LBRACE attr_def attr_def_list • RBRACE SEMICOLON
 
-    RBRACE  偏移，并进入状态 173
+    RBRACE  偏移，并进入状态 176
 
 
-状态 142
+状态 143
 
    49 type: DATE_T •
 
     $default  使用规则 49 以归约 (type)
 
 
-状态 143
+状态 144
 
    46 type: INT_T •
 
     $default  使用规则 46 以归约 (type)
 
 
-状态 144
+状态 145
 
    47 type: STRING_T •
 
     $default  使用规则 47 以归约 (type)
 
 
-状态 145
+状态 146
 
    48 type: FLOAT_T •
 
     $default  使用规则 48 以归约 (type)
 
 
-状态 146
+状态 147
 
    50 type: TEXT_T •
 
     $default  使用规则 50 以归约 (type)
 
 
-状态 147
+状态 148
 
    39 attr_def: ID_get type • LBRACE number RBRACE
    40         | ID_get type •
@@ -1825,210 +1863,139 @@
    43         | ID_get type • NOT NULL_ LBRACE number RBRACE
    44         | ID_get type • NOT NULL_
 
-    LBRACE    偏移，并进入状态 174
-    NOT       偏移，并进入状态 175
-    NULLABLE  偏移，并进入状态 176
+    LBRACE    偏移，并进入状态 177
+    NOT       偏移，并进入状态 178
+    NULLABLE  偏移，并进入状态 179
 
     $default  使用规则 40 以归约 (attr_def)
 
 
-状态 148
+状态 149
 
    33 create_index: CREATE INDEX ID ON ID LBRACE • index_field_list RBRACE SEMICOLON
 
-    ID  偏移，并进入状态 177
+    ID  偏移，并进入状态 180
 
-    index_field_list  转到状态 178
-
-
-状态 149
-
-   83 expr_cell: AGGREGATION_FUNC LBRACE ID DOT ID • RBRACE
-
-    RBRACE  偏移，并进入状态 179
+    index_field_list  转到状态 181
 
 
 状态 150
 
-   90 rel_list: COMMA ID • rel_list
-   91         | COMMA ID • AS ID rel_list
+   85 expr_cell: AGGREGATION_FUNC LBRACE ID DOT ID • RBRACE
 
-    COMMA  偏移，并进入状态 126
-    INNER  偏移，并进入状态 127
-    AS     偏移，并进入状态 180
-
-    $default  使用规则 89 以归约 (rel_list)
-
-    rel_list  转到状态 181
+    RBRACE  偏移，并进入状态 182
 
 
 状态 151
 
-   92 rel_list: INNER JOIN • ID rel_list
-   93         | INNER JOIN • ID AS ID rel_list
-   94         | INNER JOIN • ID ON condition condition_list rel_list
-   95         | INNER JOIN • ID AS ID ON condition condition_list rel_list
+   92 rel_list: COMMA ID • rel_list
+   93         | COMMA ID • AS ID rel_list
 
-    ID  偏移，并进入状态 182
+    COMMA  偏移，并进入状态 126
+    INNER  偏移，并进入状态 127
+    AS     偏移，并进入状态 183
+
+    $default  使用规则 91 以归约 (rel_list)
+
+    rel_list  转到状态 184
 
 
 状态 152
 
-   88 rel: ID AS ID • rel_list
+   94 rel_list: INNER JOIN • ID rel_list
+   95         | INNER JOIN • ID AS ID rel_list
+   96         | INNER JOIN • ID ON condition condition_list rel_list
+   97         | INNER JOIN • ID AS ID ON condition condition_list rel_list
 
-    COMMA  偏移，并进入状态 126
-    INNER  偏移，并进入状态 127
-
-    $default  使用规则 89 以归约 (rel_list)
-
-    rel_list  转到状态 183
+    ID  偏移，并进入状态 185
 
 
 状态 153
 
-  107 group_by: GROUP • BY ID group_by_rel_list
-  108         | GROUP • BY ID DOT ID group_by_rel_list
+   90 rel: ID AS ID • rel_list
 
-    BY  偏移，并进入状态 184
+    COMMA  偏移，并进入状态 126
+    INNER  偏移，并进入状态 127
+
+    $default  使用规则 91 以归约 (rel_list)
+
+    rel_list  转到状态 186
 
 
 状态 154
 
-   65 select: SELECT select_list FROM rel where group_by • having order_by SEMICOLON
+  109 group_by: GROUP • BY ID group_by_rel_list
+  110         | GROUP • BY ID DOT ID group_by_rel_list
 
-    HAVING  偏移，并进入状态 185
-
-    $default  使用规则 101 以归约 (having)
-
-    having  转到状态 186
+    BY  偏移，并进入状态 187
 
 
 状态 155
 
-   53 value_tuple: LBRACE value • value_list RBRACE
+   67 select: SELECT select_list FROM rel where group_by • having order_by SEMICOLON
 
-    COMMA  偏移，并进入状态 187
+    HAVING  偏移，并进入状态 188
 
-    $default  使用规则 56 以归约 (value_list)
+    $default  使用规则 103 以归约 (having)
 
-    value_list  转到状态 188
+    having  转到状态 189
 
 
 状态 156
+
+   53 value_tuple: LBRACE value • value_list RBRACE
+
+    COMMA  偏移，并进入状态 190
+
+    $default  使用规则 56 以归约 (value_list)
+
+    value_list  转到状态 191
+
+
+状态 157
 
    55 value_tuple_list: COMMA • value_tuple value_tuple_list
 
     LBRACE  偏移，并进入状态 132
 
-    value_tuple  转到状态 189
-
-
-状态 157
-
-   52 insert: INSERT INTO ID VALUES value_tuple value_tuple_list • SEMICOLON
-
-    SEMICOLON  偏移，并进入状态 190
+    value_tuple  转到状态 192
 
 
 状态 158
 
-  100 condition_list: AND • condition condition_list
+   52 insert: INSERT INTO ID VALUES value_tuple value_tuple_list • SEMICOLON
 
-    LBRACE            偏移，并进入状态 41
-    NULL_             偏移，并进入状态 42
-    MINUS             偏移，并进入状态 43
-    NUMBER            偏移，并进入状态 44
-    FLOAT             偏移，并进入状态 45
-    ID                偏移，并进入状态 46
-    AGGREGATION_FUNC  偏移，并进入状态 47
-    SSS               偏移，并进入状态 48
-    DATE_STR          偏移，并进入状态 50
-
-    value                     转到状态 51
-    expr                      转到状态 134
-    expr_cell                 转到状态 55
-    condition                 转到状态 191
-    condition_expression_all  转到状态 136
+    SEMICOLON  偏移，并进入状态 193
 
 
 状态 159
 
-   97 where: WHERE condition condition_list •
+   74 expr: expr • PLUS expr
+   75     | expr • MINUS expr
+   76     | expr • STAR expr
+   77     | expr • DIV expr
+   78     | expr • NUMBER
+   79     | LBRACE expr • RBRACE
+  124 condition_expression_all: LBRACE expr • expr_list RBRACE
 
-    $default  使用规则 97 以归约 (where)
+    RBRACE  偏移，并进入状态 97
+    COMMA   偏移，并进入状态 194
+    PLUS    偏移，并进入状态 81
+    DIV     偏移，并进入状态 82
+    MINUS   偏移，并进入状态 83
+    NUMBER  偏移，并进入状态 84
+    STAR    偏移，并进入状态 85
+
+    RBRACE  [使用规则 125 以归约 (expr_list)]
+
+    expr_list  转到状态 195
 
 
 状态 160
 
-  130 comOp: IS_ • NOT
-  131      | IS_ •
+  102 condition_list: AND • condition condition_list
 
-    NOT  偏移，并进入状态 192
-
-    $default  使用规则 131 以归约 (comOp)
-
-
-状态 161
-
-  128 comOp: NOT • LIKE_
-
-    LIKE_  偏移，并进入状态 193
-
-
-状态 162
-
-  129 comOp: LIKE_ •
-
-    $default  使用规则 129 以归约 (comOp)
-
-
-状态 163
-
-  122 comOp: EQ •
-
-    $default  使用规则 122 以归约 (comOp)
-
-
-状态 164
-
-  123 comOp: LT •
-
-    $default  使用规则 123 以归约 (comOp)
-
-
-状态 165
-
-  124 comOp: GT •
-
-    $default  使用规则 124 以归约 (comOp)
-
-
-状态 166
-
-  125 comOp: LE •
-
-    $default  使用规则 125 以归约 (comOp)
-
-
-状态 167
-
-  126 comOp: GE •
-
-    $default  使用规则 126 以归约 (comOp)
-
-
-状态 168
-
-  127 comOp: NE •
-
-    $default  使用规则 127 以归约 (comOp)
-
-
-状态 169
-
-   98 condition: condition_expression_all comOp • condition_expression_all
-
-    LBRACE            偏移，并进入状态 41
+    LBRACE            偏移，并进入状态 134
     NULL_             偏移，并进入状态 42
     MINUS             偏移，并进入状态 43
     NUMBER            偏移，并进入状态 44
@@ -2039,150 +2006,253 @@
     DATE_STR          偏移，并进入状态 50
 
     value                     转到状态 51
-    expr                      转到状态 134
+    expr                      转到状态 135
     expr_cell                 转到状态 55
-    condition_expression_all  转到状态 194
+    condition                 转到状态 196
+    condition_expression_all  转到状态 137
+
+
+状态 161
+
+   99 where: WHERE condition condition_list •
+
+    $default  使用规则 99 以归约 (where)
+
+
+状态 162
+
+  135 comOp: IS_ • NOT
+  136      | IS_ •
+
+    NOT  偏移，并进入状态 197
+
+    $default  使用规则 136 以归约 (comOp)
+
+
+状态 163
+
+  137 comOp: IN_ •
+
+    $default  使用规则 137 以归约 (comOp)
+
+
+状态 164
+
+  133 comOp: NOT • LIKE_
+  138      | NOT • IN_
+
+    IN_    偏移，并进入状态 198
+    LIKE_  偏移，并进入状态 199
+
+
+状态 165
+
+  134 comOp: LIKE_ •
+
+    $default  使用规则 134 以归约 (comOp)
+
+
+状态 166
+
+  127 comOp: EQ •
+
+    $default  使用规则 127 以归约 (comOp)
+
+
+状态 167
+
+  128 comOp: LT •
+
+    $default  使用规则 128 以归约 (comOp)
+
+
+状态 168
+
+  129 comOp: GT •
+
+    $default  使用规则 129 以归约 (comOp)
+
+
+状态 169
+
+  130 comOp: LE •
+
+    $default  使用规则 130 以归约 (comOp)
 
 
 状态 170
 
-   64 update: UPDATE ID SET ID EQ value • where SEMICOLON
+  131 comOp: GE •
 
-    WHERE  偏移，并进入状态 114
-
-    $default  使用规则 96 以归约 (where)
-
-    where  转到状态 195
+    $default  使用规则 131 以归约 (comOp)
 
 
 状态 171
 
-  132 load_data: LOAD DATA INFILE SSS INTO TABLE • ID SEMICOLON
+  132 comOp: NE •
 
-    ID  偏移，并进入状态 196
+    $default  使用规则 132 以归约 (comOp)
 
 
 状态 172
 
-   38 attr_def_list: COMMA attr_def • attr_def_list
+  100 condition: condition_expression_all comOp • condition_expression_all
 
-    COMMA  偏移，并进入状态 140
+    LBRACE            偏移，并进入状态 134
+    NULL_             偏移，并进入状态 42
+    MINUS             偏移，并进入状态 43
+    NUMBER            偏移，并进入状态 44
+    FLOAT             偏移，并进入状态 45
+    ID                偏移，并进入状态 46
+    AGGREGATION_FUNC  偏移，并进入状态 47
+    SSS               偏移，并进入状态 48
+    DATE_STR          偏移，并进入状态 50
 
-    $default  使用规则 37 以归约 (attr_def_list)
-
-    attr_def_list  转到状态 197
+    value                     转到状态 51
+    expr                      转到状态 135
+    expr_cell                 转到状态 55
+    condition_expression_all  转到状态 200
 
 
 状态 173
 
-   36 create_table: CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE • SEMICOLON
+   64 update: UPDATE ID SET ID EQ value • more_update where SEMICOLON
 
-    SEMICOLON  偏移，并进入状态 198
+    COMMA  偏移，并进入状态 201
+
+    $default  使用规则 65 以归约 (more_update)
+
+    more_update  转到状态 202
 
 
 状态 174
+
+  139 load_data: LOAD DATA INFILE SSS INTO TABLE • ID SEMICOLON
+
+    ID  偏移，并进入状态 203
+
+
+状态 175
+
+   38 attr_def_list: COMMA attr_def • attr_def_list
+
+    COMMA  偏移，并进入状态 141
+
+    $default  使用规则 37 以归约 (attr_def_list)
+
+    attr_def_list  转到状态 204
+
+
+状态 176
+
+   36 create_table: CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE • SEMICOLON
+
+    SEMICOLON  偏移，并进入状态 205
+
+
+状态 177
 
    39 attr_def: ID_get type LBRACE • number RBRACE
 
     NUMBER  偏移，并进入状态 99
 
-    number  转到状态 199
-
-
-状态 175
-
-   43 attr_def: ID_get type NOT • NULL_ LBRACE number RBRACE
-   44         | ID_get type NOT • NULL_
-
-    NULL_  偏移，并进入状态 200
-
-
-状态 176
-
-   41 attr_def: ID_get type NULLABLE • LBRACE number RBRACE
-   42         | ID_get type NULLABLE •
-
-    LBRACE  偏移，并进入状态 201
-
-    $default  使用规则 42 以归约 (attr_def)
-
-
-状态 177
-
-   30 index_field_list: ID • index_field_list_
-
-    COMMA  偏移，并进入状态 202
-
-    $default  使用规则 31 以归约 (index_field_list_)
-
-    index_field_list_  转到状态 203
+    number  转到状态 206
 
 
 状态 178
 
-   33 create_index: CREATE INDEX ID ON ID LBRACE index_field_list • RBRACE SEMICOLON
+   43 attr_def: ID_get type NOT • NULL_ LBRACE number RBRACE
+   44         | ID_get type NOT • NULL_
 
-    RBRACE  偏移，并进入状态 204
+    NULL_  偏移，并进入状态 207
 
 
 状态 179
 
-   83 expr_cell: AGGREGATION_FUNC LBRACE ID DOT ID RBRACE •
+   41 attr_def: ID_get type NULLABLE • LBRACE number RBRACE
+   42         | ID_get type NULLABLE •
 
-    $default  使用规则 83 以归约 (expr_cell)
+    LBRACE  偏移，并进入状态 208
+
+    $default  使用规则 42 以归约 (attr_def)
 
 
 状态 180
 
-   91 rel_list: COMMA ID AS • ID rel_list
+   30 index_field_list: ID • index_field_list_
 
-    ID  偏移，并进入状态 205
+    COMMA  偏移，并进入状态 209
+
+    $default  使用规则 31 以归约 (index_field_list_)
+
+    index_field_list_  转到状态 210
 
 
 状态 181
 
-   90 rel_list: COMMA ID rel_list •
+   33 create_index: CREATE INDEX ID ON ID LBRACE index_field_list • RBRACE SEMICOLON
 
-    $default  使用规则 90 以归约 (rel_list)
+    RBRACE  偏移，并进入状态 211
 
 
 状态 182
 
-   92 rel_list: INNER JOIN ID • rel_list
-   93         | INNER JOIN ID • AS ID rel_list
-   94         | INNER JOIN ID • ON condition condition_list rel_list
-   95         | INNER JOIN ID • AS ID ON condition condition_list rel_list
+   85 expr_cell: AGGREGATION_FUNC LBRACE ID DOT ID RBRACE •
 
-    COMMA  偏移，并进入状态 126
-    INNER  偏移，并进入状态 127
-    ON     偏移，并进入状态 206
-    AS     偏移，并进入状态 207
-
-    $default  使用规则 89 以归约 (rel_list)
-
-    rel_list  转到状态 208
+    $default  使用规则 85 以归约 (expr_cell)
 
 
 状态 183
 
-   88 rel: ID AS ID rel_list •
+   93 rel_list: COMMA ID AS • ID rel_list
 
-    $default  使用规则 88 以归约 (rel)
+    ID  偏移，并进入状态 212
 
 
 状态 184
 
-  107 group_by: GROUP BY • ID group_by_rel_list
-  108         | GROUP BY • ID DOT ID group_by_rel_list
+   92 rel_list: COMMA ID rel_list •
 
-    ID  偏移，并进入状态 209
+    $default  使用规则 92 以归约 (rel_list)
 
 
 状态 185
 
-  102 having: HAVING • having_condition having_condition_list
+   94 rel_list: INNER JOIN ID • rel_list
+   95         | INNER JOIN ID • AS ID rel_list
+   96         | INNER JOIN ID • ON condition condition_list rel_list
+   97         | INNER JOIN ID • AS ID ON condition condition_list rel_list
 
-    LBRACE            偏移，并进入状态 41
+    COMMA  偏移，并进入状态 126
+    INNER  偏移，并进入状态 127
+    ON     偏移，并进入状态 213
+    AS     偏移，并进入状态 214
+
+    $default  使用规则 91 以归约 (rel_list)
+
+    rel_list  转到状态 215
+
+
+状态 186
+
+   90 rel: ID AS ID rel_list •
+
+    $default  使用规则 90 以归约 (rel)
+
+
+状态 187
+
+  109 group_by: GROUP BY • ID group_by_rel_list
+  110         | GROUP BY • ID DOT ID group_by_rel_list
+
+    ID  偏移，并进入状态 216
+
+
+状态 188
+
+  104 having: HAVING • having_condition having_condition_list
+
+    LBRACE            偏移，并进入状态 134
     NULL_             偏移，并进入状态 42
     MINUS             偏移，并进入状态 43
     NUMBER            偏移，并进入状态 44
@@ -2193,24 +2263,24 @@
     DATE_STR          偏移，并进入状态 50
 
     value                     转到状态 51
-    expr                      转到状态 134
+    expr                      转到状态 135
     expr_cell                 转到状态 55
-    having_condition          转到状态 210
-    condition_expression_all  转到状态 211
+    having_condition          转到状态 217
+    condition_expression_all  转到状态 218
 
 
-状态 186
+状态 189
 
-   65 select: SELECT select_list FROM rel where group_by having • order_by SEMICOLON
+   67 select: SELECT select_list FROM rel where group_by having • order_by SEMICOLON
 
-    ORDER  偏移，并进入状态 212
+    ORDER  偏移，并进入状态 219
 
-    $default  使用规则 112 以归约 (order_by)
+    $default  使用规则 114 以归约 (order_by)
 
-    order_by  转到状态 213
+    order_by  转到状态 220
 
 
-状态 187
+状态 190
 
    57 value_list: COMMA • value value_list
 
@@ -2220,158 +2290,202 @@
     SSS       偏移，并进入状态 48
     DATE_STR  偏移，并进入状态 50
 
-    value  转到状态 214
+    value  转到状态 221
 
 
-状态 188
+状态 191
 
    53 value_tuple: LBRACE value value_list • RBRACE
 
-    RBRACE  偏移，并进入状态 215
+    RBRACE  偏移，并进入状态 222
 
 
-状态 189
+状态 192
 
    55 value_tuple_list: COMMA value_tuple • value_tuple_list
 
-    COMMA  偏移，并进入状态 156
+    COMMA  偏移，并进入状态 157
 
     $default  使用规则 54 以归约 (value_tuple_list)
 
-    value_tuple_list  转到状态 216
+    value_tuple_list  转到状态 223
 
 
-状态 190
+状态 193
 
    52 insert: INSERT INTO ID VALUES value_tuple value_tuple_list SEMICOLON •
 
     $default  使用规则 52 以归约 (insert)
 
 
-状态 191
-
-  100 condition_list: AND condition • condition_list
-
-    AND  偏移，并进入状态 158
-
-    $default  使用规则 99 以归约 (condition_list)
-
-    condition_list  转到状态 217
-
-
-状态 192
-
-  130 comOp: IS_ NOT •
-
-    $default  使用规则 130 以归约 (comOp)
-
-
-状态 193
-
-  128 comOp: NOT LIKE_ •
-
-    $default  使用规则 128 以归约 (comOp)
-
-
 状态 194
 
-   98 condition: condition_expression_all comOp condition_expression_all •
+  126 expr_list: COMMA • expr expr_list
 
-    $default  使用规则 98 以归约 (condition)
+    LBRACE            偏移，并进入状态 41
+    NULL_             偏移，并进入状态 42
+    MINUS             偏移，并进入状态 43
+    NUMBER            偏移，并进入状态 44
+    FLOAT             偏移，并进入状态 45
+    ID                偏移，并进入状态 46
+    AGGREGATION_FUNC  偏移，并进入状态 47
+    SSS               偏移，并进入状态 48
+    DATE_STR          偏移，并进入状态 50
+
+    value      转到状态 51
+    expr       转到状态 224
+    expr_cell  转到状态 55
 
 
 状态 195
 
-   64 update: UPDATE ID SET ID EQ value where • SEMICOLON
+  124 condition_expression_all: LBRACE expr expr_list • RBRACE
 
-    SEMICOLON  偏移，并进入状态 218
+    RBRACE  偏移，并进入状态 225
 
 
 状态 196
 
-  132 load_data: LOAD DATA INFILE SSS INTO TABLE ID • SEMICOLON
+  102 condition_list: AND condition • condition_list
 
-    SEMICOLON  偏移，并进入状态 219
+    AND  偏移，并进入状态 160
+
+    $default  使用规则 101 以归约 (condition_list)
+
+    condition_list  转到状态 226
 
 
 状态 197
+
+  135 comOp: IS_ NOT •
+
+    $default  使用规则 135 以归约 (comOp)
+
+
+状态 198
+
+  138 comOp: NOT IN_ •
+
+    $default  使用规则 138 以归约 (comOp)
+
+
+状态 199
+
+  133 comOp: NOT LIKE_ •
+
+    $default  使用规则 133 以归约 (comOp)
+
+
+状态 200
+
+  100 condition: condition_expression_all comOp condition_expression_all •
+
+    $default  使用规则 100 以归约 (condition)
+
+
+状态 201
+
+   66 more_update: COMMA • ID EQ value more_update
+
+    ID  偏移，并进入状态 227
+
+
+状态 202
+
+   64 update: UPDATE ID SET ID EQ value more_update • where SEMICOLON
+
+    WHERE  偏移，并进入状态 114
+
+    $default  使用规则 98 以归约 (where)
+
+    where  转到状态 228
+
+
+状态 203
+
+  139 load_data: LOAD DATA INFILE SSS INTO TABLE ID • SEMICOLON
+
+    SEMICOLON  偏移，并进入状态 229
+
+
+状态 204
 
    38 attr_def_list: COMMA attr_def attr_def_list •
 
     $default  使用规则 38 以归约 (attr_def_list)
 
 
-状态 198
+状态 205
 
    36 create_table: CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE SEMICOLON •
 
     $default  使用规则 36 以归约 (create_table)
 
 
-状态 199
+状态 206
 
    39 attr_def: ID_get type LBRACE number • RBRACE
 
-    RBRACE  偏移，并进入状态 220
+    RBRACE  偏移，并进入状态 230
 
 
-状态 200
+状态 207
 
    43 attr_def: ID_get type NOT NULL_ • LBRACE number RBRACE
    44         | ID_get type NOT NULL_ •
 
-    LBRACE  偏移，并进入状态 221
+    LBRACE  偏移，并进入状态 231
 
     $default  使用规则 44 以归约 (attr_def)
 
 
-状态 201
+状态 208
 
    41 attr_def: ID_get type NULLABLE LBRACE • number RBRACE
 
     NUMBER  偏移，并进入状态 99
 
-    number  转到状态 222
+    number  转到状态 232
 
 
-状态 202
+状态 209
 
    32 index_field_list_: COMMA • ID index_field_list_
 
-    ID  偏移，并进入状态 223
+    ID  偏移，并进入状态 233
 
 
-状态 203
+状态 210
 
    30 index_field_list: ID index_field_list_ •
 
     $default  使用规则 30 以归约 (index_field_list)
 
 
-状态 204
+状态 211
 
    33 create_index: CREATE INDEX ID ON ID LBRACE index_field_list RBRACE • SEMICOLON
 
-    SEMICOLON  偏移，并进入状态 224
+    SEMICOLON  偏移，并进入状态 234
 
 
-状态 205
+状态 212
 
-   91 rel_list: COMMA ID AS ID • rel_list
+   93 rel_list: COMMA ID AS ID • rel_list
 
     COMMA  偏移，并进入状态 126
     INNER  偏移，并进入状态 127
 
-    $default  使用规则 89 以归约 (rel_list)
+    $default  使用规则 91 以归约 (rel_list)
 
-    rel_list  转到状态 225
+    rel_list  转到状态 235
 
 
-状态 206
+状态 213
 
-   94 rel_list: INNER JOIN ID ON • condition condition_list rel_list
+   96 rel_list: INNER JOIN ID ON • condition condition_list rel_list
 
-    LBRACE            偏移，并进入状态 41
+    LBRACE            偏移，并进入状态 134
     NULL_             偏移，并进入状态 42
     MINUS             偏移，并进入状态 43
     NUMBER            偏移，并进入状态 44
@@ -2382,332 +2496,395 @@
     DATE_STR          偏移，并进入状态 50
 
     value                     转到状态 51
-    expr                      转到状态 134
+    expr                      转到状态 135
     expr_cell                 转到状态 55
-    condition                 转到状态 226
-    condition_expression_all  转到状态 136
-
-
-状态 207
-
-   93 rel_list: INNER JOIN ID AS • ID rel_list
-   95         | INNER JOIN ID AS • ID ON condition condition_list rel_list
-
-    ID  偏移，并进入状态 227
-
-
-状态 208
-
-   92 rel_list: INNER JOIN ID rel_list •
-
-    $default  使用规则 92 以归约 (rel_list)
-
-
-状态 209
-
-  107 group_by: GROUP BY ID • group_by_rel_list
-  108         | GROUP BY ID • DOT ID group_by_rel_list
-
-    COMMA  偏移，并进入状态 228
-    DOT    偏移，并进入状态 229
-
-    $default  使用规则 109 以归约 (group_by_rel_list)
-
-    group_by_rel_list  转到状态 230
-
-
-状态 210
-
-  102 having: HAVING having_condition • having_condition_list
-
-    AND  偏移，并进入状态 231
-
-    $default  使用规则 104 以归约 (having_condition_list)
-
-    having_condition_list  转到状态 232
-
-
-状态 211
-
-  103 having_condition: condition_expression_all • comOp condition_expression_all
-
-    IS_    偏移，并进入状态 160
-    NOT    偏移，并进入状态 161
-    LIKE_  偏移，并进入状态 162
-    EQ     偏移，并进入状态 163
-    LT     偏移，并进入状态 164
-    GT     偏移，并进入状态 165
-    LE     偏移，并进入状态 166
-    GE     偏移，并进入状态 167
-    NE     偏移，并进入状态 168
-
-    comOp  转到状态 233
-
-
-状态 212
-
-  113 order_by: ORDER • BY ID od_type order_by_info
-  114         | ORDER • BY ID DOT ID od_type order_by_info
-
-    BY  偏移，并进入状态 234
-
-
-状态 213
-
-   65 select: SELECT select_list FROM rel where group_by having order_by • SEMICOLON
-
-    SEMICOLON  偏移，并进入状态 235
+    condition                 转到状态 236
+    condition_expression_all  转到状态 137
 
 
 状态 214
 
-   57 value_list: COMMA value • value_list
+   95 rel_list: INNER JOIN ID AS • ID rel_list
+   97         | INNER JOIN ID AS • ID ON condition condition_list rel_list
 
-    COMMA  偏移，并进入状态 187
-
-    $default  使用规则 56 以归约 (value_list)
-
-    value_list  转到状态 236
+    ID  偏移，并进入状态 237
 
 
 状态 215
+
+   94 rel_list: INNER JOIN ID rel_list •
+
+    $default  使用规则 94 以归约 (rel_list)
+
+
+状态 216
+
+  109 group_by: GROUP BY ID • group_by_rel_list
+  110         | GROUP BY ID • DOT ID group_by_rel_list
+
+    COMMA  偏移，并进入状态 238
+    DOT    偏移，并进入状态 239
+
+    $default  使用规则 111 以归约 (group_by_rel_list)
+
+    group_by_rel_list  转到状态 240
+
+
+状态 217
+
+  104 having: HAVING having_condition • having_condition_list
+
+    AND  偏移，并进入状态 241
+
+    $default  使用规则 106 以归约 (having_condition_list)
+
+    having_condition_list  转到状态 242
+
+
+状态 218
+
+  105 having_condition: condition_expression_all • comOp condition_expression_all
+
+    IS_    偏移，并进入状态 162
+    IN_    偏移，并进入状态 163
+    NOT    偏移，并进入状态 164
+    LIKE_  偏移，并进入状态 165
+    EQ     偏移，并进入状态 166
+    LT     偏移，并进入状态 167
+    GT     偏移，并进入状态 168
+    LE     偏移，并进入状态 169
+    GE     偏移，并进入状态 170
+    NE     偏移，并进入状态 171
+
+    comOp  转到状态 243
+
+
+状态 219
+
+  115 order_by: ORDER • BY ID od_type order_by_info
+  116         | ORDER • BY ID DOT ID od_type order_by_info
+
+    BY  偏移，并进入状态 244
+
+
+状态 220
+
+   67 select: SELECT select_list FROM rel where group_by having order_by • SEMICOLON
+
+    SEMICOLON  偏移，并进入状态 245
+
+
+状态 221
+
+   57 value_list: COMMA value • value_list
+
+    COMMA  偏移，并进入状态 190
+
+    $default  使用规则 56 以归约 (value_list)
+
+    value_list  转到状态 246
+
+
+状态 222
 
    53 value_tuple: LBRACE value value_list RBRACE •
 
     $default  使用规则 53 以归约 (value_tuple)
 
 
-状态 216
+状态 223
 
    55 value_tuple_list: COMMA value_tuple value_tuple_list •
 
     $default  使用规则 55 以归约 (value_tuple_list)
 
 
-状态 217
+状态 224
 
-  100 condition_list: AND condition condition_list •
+   74 expr: expr • PLUS expr
+   75     | expr • MINUS expr
+   76     | expr • STAR expr
+   77     | expr • DIV expr
+   78     | expr • NUMBER
+  126 expr_list: COMMA expr • expr_list
 
-    $default  使用规则 100 以归约 (condition_list)
+    COMMA   偏移，并进入状态 194
+    PLUS    偏移，并进入状态 81
+    DIV     偏移，并进入状态 82
+    MINUS   偏移，并进入状态 83
+    NUMBER  偏移，并进入状态 84
+    STAR    偏移，并进入状态 85
+
+    $default  使用规则 125 以归约 (expr_list)
+
+    expr_list  转到状态 247
 
 
-状态 218
+状态 225
 
-   64 update: UPDATE ID SET ID EQ value where SEMICOLON •
+  124 condition_expression_all: LBRACE expr expr_list RBRACE •
 
-    $default  使用规则 64 以归约 (update)
-
-
-状态 219
-
-  132 load_data: LOAD DATA INFILE SSS INTO TABLE ID SEMICOLON •
-
-    $default  使用规则 132 以归约 (load_data)
+    $default  使用规则 124 以归约 (condition_expression_all)
 
 
-状态 220
+状态 226
+
+  102 condition_list: AND condition condition_list •
+
+    $default  使用规则 102 以归约 (condition_list)
+
+
+状态 227
+
+   66 more_update: COMMA ID • EQ value more_update
+
+    EQ  偏移，并进入状态 248
+
+
+状态 228
+
+   64 update: UPDATE ID SET ID EQ value more_update where • SEMICOLON
+
+    SEMICOLON  偏移，并进入状态 249
+
+
+状态 229
+
+  139 load_data: LOAD DATA INFILE SSS INTO TABLE ID SEMICOLON •
+
+    $default  使用规则 139 以归约 (load_data)
+
+
+状态 230
 
    39 attr_def: ID_get type LBRACE number RBRACE •
 
     $default  使用规则 39 以归约 (attr_def)
 
 
-状态 221
+状态 231
 
    43 attr_def: ID_get type NOT NULL_ LBRACE • number RBRACE
 
     NUMBER  偏移，并进入状态 99
 
-    number  转到状态 237
+    number  转到状态 250
 
 
-状态 222
+状态 232
 
    41 attr_def: ID_get type NULLABLE LBRACE number • RBRACE
 
-    RBRACE  偏移，并进入状态 238
+    RBRACE  偏移，并进入状态 251
 
 
-状态 223
+状态 233
 
    32 index_field_list_: COMMA ID • index_field_list_
 
-    COMMA  偏移，并进入状态 202
+    COMMA  偏移，并进入状态 209
 
     $default  使用规则 31 以归约 (index_field_list_)
 
-    index_field_list_  转到状态 239
+    index_field_list_  转到状态 252
 
 
-状态 224
+状态 234
 
    33 create_index: CREATE INDEX ID ON ID LBRACE index_field_list RBRACE SEMICOLON •
 
     $default  使用规则 33 以归约 (create_index)
 
 
-状态 225
-
-   91 rel_list: COMMA ID AS ID rel_list •
-
-    $default  使用规则 91 以归约 (rel_list)
-
-
-状态 226
-
-   94 rel_list: INNER JOIN ID ON condition • condition_list rel_list
-
-    AND  偏移，并进入状态 158
-
-    $default  使用规则 99 以归约 (condition_list)
-
-    condition_list  转到状态 240
-
-
-状态 227
-
-   93 rel_list: INNER JOIN ID AS ID • rel_list
-   95         | INNER JOIN ID AS ID • ON condition condition_list rel_list
-
-    COMMA  偏移，并进入状态 126
-    INNER  偏移，并进入状态 127
-    ON     偏移，并进入状态 241
-
-    $default  使用规则 89 以归约 (rel_list)
-
-    rel_list  转到状态 242
-
-
-状态 228
-
-  110 group_by_rel_list: COMMA • ID group_by_rel_list
-  111                  | COMMA • ID DOT ID group_by_rel_list
-
-    ID  偏移，并进入状态 243
-
-
-状态 229
-
-  108 group_by: GROUP BY ID DOT • ID group_by_rel_list
-
-    ID  偏移，并进入状态 244
-
-
-状态 230
-
-  107 group_by: GROUP BY ID group_by_rel_list •
-
-    $default  使用规则 107 以归约 (group_by)
-
-
-状态 231
-
-  105 having_condition_list: AND • having_condition having_condition_list
-
-    LBRACE            偏移，并进入状态 41
-    NULL_             偏移，并进入状态 42
-    MINUS             偏移，并进入状态 43
-    NUMBER            偏移，并进入状态 44
-    FLOAT             偏移，并进入状态 45
-    ID                偏移，并进入状态 46
-    AGGREGATION_FUNC  偏移，并进入状态 47
-    SSS               偏移，并进入状态 48
-    DATE_STR          偏移，并进入状态 50
-
-    value                     转到状态 51
-    expr                      转到状态 134
-    expr_cell                 转到状态 55
-    having_condition          转到状态 245
-    condition_expression_all  转到状态 211
-
-
-状态 232
-
-  102 having: HAVING having_condition having_condition_list •
-
-    $default  使用规则 102 以归约 (having)
-
-
-状态 233
-
-  103 having_condition: condition_expression_all comOp • condition_expression_all
-
-    LBRACE            偏移，并进入状态 41
-    NULL_             偏移，并进入状态 42
-    MINUS             偏移，并进入状态 43
-    NUMBER            偏移，并进入状态 44
-    FLOAT             偏移，并进入状态 45
-    ID                偏移，并进入状态 46
-    AGGREGATION_FUNC  偏移，并进入状态 47
-    SSS               偏移，并进入状态 48
-    DATE_STR          偏移，并进入状态 50
-
-    value                     转到状态 51
-    expr                      转到状态 134
-    expr_cell                 转到状态 55
-    condition_expression_all  转到状态 246
-
-
-状态 234
-
-  113 order_by: ORDER BY • ID od_type order_by_info
-  114         | ORDER BY • ID DOT ID od_type order_by_info
-
-    ID  偏移，并进入状态 247
-
-
 状态 235
 
-   65 select: SELECT select_list FROM rel where group_by having order_by SEMICOLON •
+   93 rel_list: COMMA ID AS ID rel_list •
 
-    $default  使用规则 65 以归约 (select)
+    $default  使用规则 93 以归约 (rel_list)
 
 
 状态 236
+
+   96 rel_list: INNER JOIN ID ON condition • condition_list rel_list
+
+    AND  偏移，并进入状态 160
+
+    $default  使用规则 101 以归约 (condition_list)
+
+    condition_list  转到状态 253
+
+
+状态 237
+
+   95 rel_list: INNER JOIN ID AS ID • rel_list
+   97         | INNER JOIN ID AS ID • ON condition condition_list rel_list
+
+    COMMA  偏移，并进入状态 126
+    INNER  偏移，并进入状态 127
+    ON     偏移，并进入状态 254
+
+    $default  使用规则 91 以归约 (rel_list)
+
+    rel_list  转到状态 255
+
+
+状态 238
+
+  112 group_by_rel_list: COMMA • ID group_by_rel_list
+  113                  | COMMA • ID DOT ID group_by_rel_list
+
+    ID  偏移，并进入状态 256
+
+
+状态 239
+
+  110 group_by: GROUP BY ID DOT • ID group_by_rel_list
+
+    ID  偏移，并进入状态 257
+
+
+状态 240
+
+  109 group_by: GROUP BY ID group_by_rel_list •
+
+    $default  使用规则 109 以归约 (group_by)
+
+
+状态 241
+
+  107 having_condition_list: AND • having_condition having_condition_list
+
+    LBRACE            偏移，并进入状态 134
+    NULL_             偏移，并进入状态 42
+    MINUS             偏移，并进入状态 43
+    NUMBER            偏移，并进入状态 44
+    FLOAT             偏移，并进入状态 45
+    ID                偏移，并进入状态 46
+    AGGREGATION_FUNC  偏移，并进入状态 47
+    SSS               偏移，并进入状态 48
+    DATE_STR          偏移，并进入状态 50
+
+    value                     转到状态 51
+    expr                      转到状态 135
+    expr_cell                 转到状态 55
+    having_condition          转到状态 258
+    condition_expression_all  转到状态 218
+
+
+状态 242
+
+  104 having: HAVING having_condition having_condition_list •
+
+    $default  使用规则 104 以归约 (having)
+
+
+状态 243
+
+  105 having_condition: condition_expression_all comOp • condition_expression_all
+
+    LBRACE            偏移，并进入状态 134
+    NULL_             偏移，并进入状态 42
+    MINUS             偏移，并进入状态 43
+    NUMBER            偏移，并进入状态 44
+    FLOAT             偏移，并进入状态 45
+    ID                偏移，并进入状态 46
+    AGGREGATION_FUNC  偏移，并进入状态 47
+    SSS               偏移，并进入状态 48
+    DATE_STR          偏移，并进入状态 50
+
+    value                     转到状态 51
+    expr                      转到状态 135
+    expr_cell                 转到状态 55
+    condition_expression_all  转到状态 259
+
+
+状态 244
+
+  115 order_by: ORDER BY • ID od_type order_by_info
+  116         | ORDER BY • ID DOT ID od_type order_by_info
+
+    ID  偏移，并进入状态 260
+
+
+状态 245
+
+   67 select: SELECT select_list FROM rel where group_by having order_by SEMICOLON •
+
+    $default  使用规则 67 以归约 (select)
+
+
+状态 246
 
    57 value_list: COMMA value value_list •
 
     $default  使用规则 57 以归约 (value_list)
 
 
-状态 237
+状态 247
+
+  126 expr_list: COMMA expr expr_list •
+
+    $default  使用规则 126 以归约 (expr_list)
+
+
+状态 248
+
+   66 more_update: COMMA ID EQ • value more_update
+
+    NULL_     偏移，并进入状态 42
+    NUMBER    偏移，并进入状态 44
+    FLOAT     偏移，并进入状态 45
+    SSS       偏移，并进入状态 48
+    DATE_STR  偏移，并进入状态 50
+
+    value  转到状态 261
+
+
+状态 249
+
+   64 update: UPDATE ID SET ID EQ value more_update where SEMICOLON •
+
+    $default  使用规则 64 以归约 (update)
+
+
+状态 250
 
    43 attr_def: ID_get type NOT NULL_ LBRACE number • RBRACE
 
-    RBRACE  偏移，并进入状态 248
+    RBRACE  偏移，并进入状态 262
 
 
-状态 238
+状态 251
 
    41 attr_def: ID_get type NULLABLE LBRACE number RBRACE •
 
     $default  使用规则 41 以归约 (attr_def)
 
 
-状态 239
+状态 252
 
    32 index_field_list_: COMMA ID index_field_list_ •
 
     $default  使用规则 32 以归约 (index_field_list_)
 
 
-状态 240
+状态 253
 
-   94 rel_list: INNER JOIN ID ON condition condition_list • rel_list
+   96 rel_list: INNER JOIN ID ON condition condition_list • rel_list
 
     COMMA  偏移，并进入状态 126
     INNER  偏移，并进入状态 127
 
-    $default  使用规则 89 以归约 (rel_list)
+    $default  使用规则 91 以归约 (rel_list)
 
-    rel_list  转到状态 249
+    rel_list  转到状态 263
 
 
-状态 241
+状态 254
 
-   95 rel_list: INNER JOIN ID AS ID ON • condition condition_list rel_list
+   97 rel_list: INNER JOIN ID AS ID ON • condition condition_list rel_list
 
-    LBRACE            偏移，并进入状态 41
+    LBRACE            偏移，并进入状态 134
     NULL_             偏移，并进入状态 42
     MINUS             偏移，并进入状态 43
     NUMBER            偏移，并进入状态 44
@@ -2718,306 +2895,324 @@
     DATE_STR          偏移，并进入状态 50
 
     value                     转到状态 51
-    expr                      转到状态 134
+    expr                      转到状态 135
     expr_cell                 转到状态 55
-    condition                 转到状态 250
-    condition_expression_all  转到状态 136
+    condition                 转到状态 264
+    condition_expression_all  转到状态 137
 
 
-状态 242
+状态 255
 
-   93 rel_list: INNER JOIN ID AS ID rel_list •
+   95 rel_list: INNER JOIN ID AS ID rel_list •
 
-    $default  使用规则 93 以归约 (rel_list)
-
-
-状态 243
-
-  110 group_by_rel_list: COMMA ID • group_by_rel_list
-  111                  | COMMA ID • DOT ID group_by_rel_list
-
-    COMMA  偏移，并进入状态 228
-    DOT    偏移，并进入状态 251
-
-    $default  使用规则 109 以归约 (group_by_rel_list)
-
-    group_by_rel_list  转到状态 252
+    $default  使用规则 95 以归约 (rel_list)
 
 
-状态 244
+状态 256
 
-  108 group_by: GROUP BY ID DOT ID • group_by_rel_list
+  112 group_by_rel_list: COMMA ID • group_by_rel_list
+  113                  | COMMA ID • DOT ID group_by_rel_list
 
-    COMMA  偏移，并进入状态 228
+    COMMA  偏移，并进入状态 238
+    DOT    偏移，并进入状态 265
 
-    $default  使用规则 109 以归约 (group_by_rel_list)
+    $default  使用规则 111 以归约 (group_by_rel_list)
 
-    group_by_rel_list  转到状态 253
-
-
-状态 245
-
-  105 having_condition_list: AND having_condition • having_condition_list
-
-    AND  偏移，并进入状态 231
-
-    $default  使用规则 104 以归约 (having_condition_list)
-
-    having_condition_list  转到状态 254
+    group_by_rel_list  转到状态 266
 
 
-状态 246
+状态 257
 
-  103 having_condition: condition_expression_all comOp condition_expression_all •
+  110 group_by: GROUP BY ID DOT ID • group_by_rel_list
 
-    $default  使用规则 103 以归约 (having_condition)
+    COMMA  偏移，并进入状态 238
 
+    $default  使用规则 111 以归约 (group_by_rel_list)
 
-状态 247
-
-  113 order_by: ORDER BY ID • od_type order_by_info
-  114         | ORDER BY ID • DOT ID od_type order_by_info
-
-    DESC  偏移，并进入状态 255
-    ASC   偏移，并进入状态 256
-    DOT   偏移，并进入状态 257
-
-    $default  使用规则 115 以归约 (od_type)
-
-    od_type  转到状态 258
+    group_by_rel_list  转到状态 267
 
 
-状态 248
+状态 258
+
+  107 having_condition_list: AND having_condition • having_condition_list
+
+    AND  偏移，并进入状态 241
+
+    $default  使用规则 106 以归约 (having_condition_list)
+
+    having_condition_list  转到状态 268
+
+
+状态 259
+
+  105 having_condition: condition_expression_all comOp condition_expression_all •
+
+    $default  使用规则 105 以归约 (having_condition)
+
+
+状态 260
+
+  115 order_by: ORDER BY ID • od_type order_by_info
+  116         | ORDER BY ID • DOT ID od_type order_by_info
+
+    DESC  偏移，并进入状态 269
+    ASC   偏移，并进入状态 270
+    DOT   偏移，并进入状态 271
+
+    $default  使用规则 117 以归约 (od_type)
+
+    od_type  转到状态 272
+
+
+状态 261
+
+   66 more_update: COMMA ID EQ value • more_update
+
+    COMMA  偏移，并进入状态 201
+
+    $default  使用规则 65 以归约 (more_update)
+
+    more_update  转到状态 273
+
+
+状态 262
 
    43 attr_def: ID_get type NOT NULL_ LBRACE number RBRACE •
 
     $default  使用规则 43 以归约 (attr_def)
 
 
-状态 249
-
-   94 rel_list: INNER JOIN ID ON condition condition_list rel_list •
-
-    $default  使用规则 94 以归约 (rel_list)
-
-
-状态 250
-
-   95 rel_list: INNER JOIN ID AS ID ON condition • condition_list rel_list
-
-    AND  偏移，并进入状态 158
-
-    $default  使用规则 99 以归约 (condition_list)
-
-    condition_list  转到状态 259
-
-
-状态 251
-
-  111 group_by_rel_list: COMMA ID DOT • ID group_by_rel_list
-
-    ID  偏移，并进入状态 260
-
-
-状态 252
-
-  110 group_by_rel_list: COMMA ID group_by_rel_list •
-
-    $default  使用规则 110 以归约 (group_by_rel_list)
-
-
-状态 253
-
-  108 group_by: GROUP BY ID DOT ID group_by_rel_list •
-
-    $default  使用规则 108 以归约 (group_by)
-
-
-状态 254
-
-  105 having_condition_list: AND having_condition having_condition_list •
-
-    $default  使用规则 105 以归约 (having_condition_list)
-
-
-状态 255
-
-  117 od_type: DESC •
-
-    $default  使用规则 117 以归约 (od_type)
-
-
-状态 256
-
-  116 od_type: ASC •
-
-    $default  使用规则 116 以归约 (od_type)
-
-
-状态 257
-
-  114 order_by: ORDER BY ID DOT • ID od_type order_by_info
-
-    ID  偏移，并进入状态 261
-
-
-状态 258
-
-  113 order_by: ORDER BY ID od_type • order_by_info
-
-    COMMA  偏移，并进入状态 262
-
-    $default  使用规则 118 以归约 (order_by_info)
-
-    order_by_info  转到状态 263
-
-
-状态 259
-
-   95 rel_list: INNER JOIN ID AS ID ON condition condition_list • rel_list
-
-    COMMA  偏移，并进入状态 126
-    INNER  偏移，并进入状态 127
-
-    $default  使用规则 89 以归约 (rel_list)
-
-    rel_list  转到状态 264
-
-
-状态 260
-
-  111 group_by_rel_list: COMMA ID DOT ID • group_by_rel_list
-
-    COMMA  偏移，并进入状态 228
-
-    $default  使用规则 109 以归约 (group_by_rel_list)
-
-    group_by_rel_list  转到状态 265
-
-
-状态 261
-
-  114 order_by: ORDER BY ID DOT ID • od_type order_by_info
-
-    DESC  偏移，并进入状态 255
-    ASC   偏移，并进入状态 256
-
-    $default  使用规则 115 以归约 (od_type)
-
-    od_type  转到状态 266
-
-
-状态 262
-
-  119 order_by_info: COMMA • ID od_type order_by_info
-  120              | COMMA • ID DOT ID od_type order_by_info
-
-    ID  偏移，并进入状态 267
-
-
 状态 263
 
-  113 order_by: ORDER BY ID od_type order_by_info •
+   96 rel_list: INNER JOIN ID ON condition condition_list rel_list •
 
-    $default  使用规则 113 以归约 (order_by)
+    $default  使用规则 96 以归约 (rel_list)
 
 
 状态 264
 
-   95 rel_list: INNER JOIN ID AS ID ON condition condition_list rel_list •
+   97 rel_list: INNER JOIN ID AS ID ON condition • condition_list rel_list
 
-    $default  使用规则 95 以归约 (rel_list)
+    AND  偏移，并进入状态 160
+
+    $default  使用规则 101 以归约 (condition_list)
+
+    condition_list  转到状态 274
 
 
 状态 265
 
-  111 group_by_rel_list: COMMA ID DOT ID group_by_rel_list •
+  113 group_by_rel_list: COMMA ID DOT • ID group_by_rel_list
 
-    $default  使用规则 111 以归约 (group_by_rel_list)
+    ID  偏移，并进入状态 275
 
 
 状态 266
 
-  114 order_by: ORDER BY ID DOT ID od_type • order_by_info
+  112 group_by_rel_list: COMMA ID group_by_rel_list •
 
-    COMMA  偏移，并进入状态 262
-
-    $default  使用规则 118 以归约 (order_by_info)
-
-    order_by_info  转到状态 268
+    $default  使用规则 112 以归约 (group_by_rel_list)
 
 
 状态 267
 
-  119 order_by_info: COMMA ID • od_type order_by_info
-  120              | COMMA ID • DOT ID od_type order_by_info
+  110 group_by: GROUP BY ID DOT ID group_by_rel_list •
 
-    DESC  偏移，并进入状态 255
-    ASC   偏移，并进入状态 256
-    DOT   偏移，并进入状态 269
-
-    $default  使用规则 115 以归约 (od_type)
-
-    od_type  转到状态 270
+    $default  使用规则 110 以归约 (group_by)
 
 
 状态 268
 
-  114 order_by: ORDER BY ID DOT ID od_type order_by_info •
+  107 having_condition_list: AND having_condition having_condition_list •
 
-    $default  使用规则 114 以归约 (order_by)
+    $default  使用规则 107 以归约 (having_condition_list)
 
 
 状态 269
 
-  120 order_by_info: COMMA ID DOT • ID od_type order_by_info
+  119 od_type: DESC •
 
-    ID  偏移，并进入状态 271
+    $default  使用规则 119 以归约 (od_type)
 
 
 状态 270
 
-  119 order_by_info: COMMA ID od_type • order_by_info
+  118 od_type: ASC •
 
-    COMMA  偏移，并进入状态 262
-
-    $default  使用规则 118 以归约 (order_by_info)
-
-    order_by_info  转到状态 272
+    $default  使用规则 118 以归约 (od_type)
 
 
 状态 271
 
-  120 order_by_info: COMMA ID DOT ID • od_type order_by_info
+  116 order_by: ORDER BY ID DOT • ID od_type order_by_info
 
-    DESC  偏移，并进入状态 255
-    ASC   偏移，并进入状态 256
-
-    $default  使用规则 115 以归约 (od_type)
-
-    od_type  转到状态 273
+    ID  偏移，并进入状态 276
 
 
 状态 272
 
-  119 order_by_info: COMMA ID od_type order_by_info •
+  115 order_by: ORDER BY ID od_type • order_by_info
 
-    $default  使用规则 119 以归约 (order_by_info)
+    COMMA  偏移，并进入状态 277
+
+    $default  使用规则 120 以归约 (order_by_info)
+
+    order_by_info  转到状态 278
 
 
 状态 273
 
-  120 order_by_info: COMMA ID DOT ID od_type • order_by_info
+   66 more_update: COMMA ID EQ value more_update •
 
-    COMMA  偏移，并进入状态 262
-
-    $default  使用规则 118 以归约 (order_by_info)
-
-    order_by_info  转到状态 274
+    $default  使用规则 66 以归约 (more_update)
 
 
 状态 274
 
-  120 order_by_info: COMMA ID DOT ID od_type order_by_info •
+   97 rel_list: INNER JOIN ID AS ID ON condition condition_list • rel_list
+
+    COMMA  偏移，并进入状态 126
+    INNER  偏移，并进入状态 127
+
+    $default  使用规则 91 以归约 (rel_list)
+
+    rel_list  转到状态 279
+
+
+状态 275
+
+  113 group_by_rel_list: COMMA ID DOT ID • group_by_rel_list
+
+    COMMA  偏移，并进入状态 238
+
+    $default  使用规则 111 以归约 (group_by_rel_list)
+
+    group_by_rel_list  转到状态 280
+
+
+状态 276
+
+  116 order_by: ORDER BY ID DOT ID • od_type order_by_info
+
+    DESC  偏移，并进入状态 269
+    ASC   偏移，并进入状态 270
+
+    $default  使用规则 117 以归约 (od_type)
+
+    od_type  转到状态 281
+
+
+状态 277
+
+  121 order_by_info: COMMA • ID od_type order_by_info
+  122              | COMMA • ID DOT ID od_type order_by_info
+
+    ID  偏移，并进入状态 282
+
+
+状态 278
+
+  115 order_by: ORDER BY ID od_type order_by_info •
+
+    $default  使用规则 115 以归约 (order_by)
+
+
+状态 279
+
+   97 rel_list: INNER JOIN ID AS ID ON condition condition_list rel_list •
+
+    $default  使用规则 97 以归约 (rel_list)
+
+
+状态 280
+
+  113 group_by_rel_list: COMMA ID DOT ID group_by_rel_list •
+
+    $default  使用规则 113 以归约 (group_by_rel_list)
+
+
+状态 281
+
+  116 order_by: ORDER BY ID DOT ID od_type • order_by_info
+
+    COMMA  偏移，并进入状态 277
 
     $default  使用规则 120 以归约 (order_by_info)
+
+    order_by_info  转到状态 283
+
+
+状态 282
+
+  121 order_by_info: COMMA ID • od_type order_by_info
+  122              | COMMA ID • DOT ID od_type order_by_info
+
+    DESC  偏移，并进入状态 269
+    ASC   偏移，并进入状态 270
+    DOT   偏移，并进入状态 284
+
+    $default  使用规则 117 以归约 (od_type)
+
+    od_type  转到状态 285
+
+
+状态 283
+
+  116 order_by: ORDER BY ID DOT ID od_type order_by_info •
+
+    $default  使用规则 116 以归约 (order_by)
+
+
+状态 284
+
+  122 order_by_info: COMMA ID DOT • ID od_type order_by_info
+
+    ID  偏移，并进入状态 286
+
+
+状态 285
+
+  121 order_by_info: COMMA ID od_type • order_by_info
+
+    COMMA  偏移，并进入状态 277
+
+    $default  使用规则 120 以归约 (order_by_info)
+
+    order_by_info  转到状态 287
+
+
+状态 286
+
+  122 order_by_info: COMMA ID DOT ID • od_type order_by_info
+
+    DESC  偏移，并进入状态 269
+    ASC   偏移，并进入状态 270
+
+    $default  使用规则 117 以归约 (od_type)
+
+    od_type  转到状态 288
+
+
+状态 287
+
+  121 order_by_info: COMMA ID od_type order_by_info •
+
+    $default  使用规则 121 以归约 (order_by_info)
+
+
+状态 288
+
+  122 order_by_info: COMMA ID DOT ID od_type • order_by_info
+
+    COMMA  偏移，并进入状态 277
+
+    $default  使用规则 120 以归约 (order_by_info)
+
+    order_by_info  转到状态 289
+
+
+状态 289
+
+  122 order_by_info: COMMA ID DOT ID od_type order_by_info •
+
+    $default  使用规则 122 以归约 (order_by_info)

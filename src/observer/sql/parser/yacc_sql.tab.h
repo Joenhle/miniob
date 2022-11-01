@@ -39,7 +39,7 @@
 # define YY_YY_YACC_SQL_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+# define YYDEBUG 1
 #endif
 #if YYDEBUG
 extern int yydebug;
@@ -95,35 +95,36 @@ extern int yydebug;
     DATA = 296,                    /* DATA  */
     INFILE = 297,                  /* INFILE  */
     IS_ = 298,                     /* IS_  */
-    NOT = 299,                     /* NOT  */
-    LIKE_ = 300,                   /* LIKE_  */
-    GROUP = 301,                   /* GROUP  */
-    BY = 302,                      /* BY  */
-    ORDER = 303,                   /* ORDER  */
-    HAVING = 304,                  /* HAVING  */
-    AS = 305,                      /* AS  */
-    NULLABLE = 306,                /* NULLABLE  */
-    NULL_ = 307,                   /* NULL_  */
-    EQ = 308,                      /* EQ  */
-    LT = 309,                      /* LT  */
-    GT = 310,                      /* GT  */
-    LE = 311,                      /* LE  */
-    GE = 312,                      /* GE  */
-    NE = 313,                      /* NE  */
-    PLUS = 314,                    /* PLUS  */
-    DIV = 315,                     /* DIV  */
-    MINUS = 316,                   /* MINUS  */
-    NUMBER = 317,                  /* NUMBER  */
-    FLOAT = 318,                   /* FLOAT  */
-    ID = 319,                      /* ID  */
-    AGGREGATION_FUNC = 320,        /* AGGREGATION_FUNC  */
-    AGGREGATION_FUNC_VALUE = 321,  /* AGGREGATION_FUNC_VALUE  */
-    PATH = 322,                    /* PATH  */
-    SSS = 323,                     /* SSS  */
-    STAR = 324,                    /* STAR  */
-    STRING_V = 325,                /* STRING_V  */
-    DATE_STR = 326,                /* DATE_STR  */
-    U_neg = 327                    /* U_neg  */
+    IN_ = 299,                     /* IN_  */
+    NOT = 300,                     /* NOT  */
+    LIKE_ = 301,                   /* LIKE_  */
+    GROUP = 302,                   /* GROUP  */
+    BY = 303,                      /* BY  */
+    ORDER = 304,                   /* ORDER  */
+    HAVING = 305,                  /* HAVING  */
+    AS = 306,                      /* AS  */
+    NULLABLE = 307,                /* NULLABLE  */
+    NULL_ = 308,                   /* NULL_  */
+    EQ = 309,                      /* EQ  */
+    LT = 310,                      /* LT  */
+    GT = 311,                      /* GT  */
+    LE = 312,                      /* LE  */
+    GE = 313,                      /* GE  */
+    NE = 314,                      /* NE  */
+    PLUS = 315,                    /* PLUS  */
+    DIV = 316,                     /* DIV  */
+    MINUS = 317,                   /* MINUS  */
+    NUMBER = 318,                  /* NUMBER  */
+    FLOAT = 319,                   /* FLOAT  */
+    ID = 320,                      /* ID  */
+    AGGREGATION_FUNC = 321,        /* AGGREGATION_FUNC  */
+    AGGREGATION_FUNC_VALUE = 322,  /* AGGREGATION_FUNC_VALUE  */
+    PATH = 323,                    /* PATH  */
+    SSS = 324,                     /* SSS  */
+    STAR = 325,                    /* STAR  */
+    STRING_V = 326,                /* STRING_V  */
+    DATE_STR = 327,                /* DATE_STR  */
+    U_neg = 328                    /* U_neg  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -132,7 +133,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 131 "yacc_sql.y"
+#line 132 "yacc_sql.y"
 
   struct _Attr *attr;
   struct _Condition *condition1;
@@ -142,7 +143,7 @@ union YYSTYPE
   float floats;
 	char *position;
 
-#line 146 "yacc_sql.tab.h"
+#line 147 "yacc_sql.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

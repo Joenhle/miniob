@@ -109,6 +109,7 @@ ParserContext *get_context(yyscan_t scanner)
         DATA
         INFILE
         IS_
+        IN_
         NOT
         LIKE_
         GROUP
@@ -748,9 +749,15 @@ condition_expression_all:
                 CONTEXT->expr_cell_buffer_condition_first_position = CONTEXT->expr_cell_buffer_num;
             }
          }
+    | LBRACE expr expr_list RBRACE {
+    }
     ;
 
-
+expr_list:
+    /* empty */
+    | COMMA expr expr_list {
+    }
+    ;
 
 comOp:
   	  EQ { CONTEXT->comp = EQUAL_TO; }
@@ -763,6 +770,8 @@ comOp:
     | LIKE_ { CONTEXT->comp = LIKE; }
     | IS_ NOT { CONTEXT->comp = IS_NOT; }
     | IS_ {CONTEXT->comp = IS; }
+    | IN_ { CONTEXT->comp = IN; }
+    | NOT IN_ { CONTEXT->comp = NOT_IN; }
     ;
 
 load_data:

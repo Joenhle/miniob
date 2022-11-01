@@ -82,10 +82,28 @@ bool PredicateOperator::do_predicate(Tuple* t1)
       if ((rc = left->get_value(*t1, left_cell)) != SUCCESS) {
         return false;
       }
-      if ((rc = right->get_value(*t1, right_cell)) != SUCCESS) {
+      if (comp != IN && comp != NOT_IN && (rc = right->get_value(*t1, right_cell)) != SUCCESS) {
        return false;
       }
     }
+
+    if (comp == IN || comp == NOT_IN) {
+      if (right->type() != ExprType::CALCULATE) {
+        LOG_WARN("the right expr should be calculate");
+        return INVALID_ARGUMENT;
+      }
+      bool has_in = false;
+      auto expr = (CalculateExpr*)right;
+      for (auto item : expr->expr_cells()) {
+        if (left_cell.to_string() == item) {
+          has_in = true;
+          break;
+        }
+      }
+      if ((comp == IN && has_in == false) || (comp == NOT_IN && has_in == true)) return false;
+      continue;
+    }
+
     if (comp == LIKE || comp == NOT_LIKE) {
       if (left_cell.attr_type() == AttrType::CHARS && right_cell.attr_type() == AttrType::CHARS) {
         bool flag = compare_string((void *)left_cell.data(), left_cell.length(), (void *)right_cell.data(), right_cell.length(), true);

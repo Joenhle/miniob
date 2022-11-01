@@ -1,0 +1,17 @@
+create table t1(id int, age int);
+create table t2(id int, age int);
+insert into t1 values(1, 1);
+insert into t1 values(2, 2);
+insert into t1 values(3, 3);
+
+select * from t1 where id in (1, 2);
+
+
+
+insert into t2 values(1, 1);
+insert into t2 values(2, 2);
+insert into t2 values(3, 3);
+
+select * from t1 where t1.age > (select avg(t2.age) from t2) and t1.id > 1;
+
+
