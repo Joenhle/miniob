@@ -280,9 +280,12 @@ void ParseStage::handle_event(StageEvent *event)
       sub_query_pair =  handle_sub_query(sql_event->sql());
     }
   }
-  handle_request(sql_event, false);
-  sql_event->done_immediate();
   LOG_TRACE("Exit\n");
+  if ((rc = handle_request(sql_event, false)) != SUCCESS) {
+    return;
+  } else {
+    sql_event->done_immediate();
+  }
   return;
 }
 

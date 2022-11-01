@@ -88,6 +88,9 @@ bool PredicateOperator::do_predicate(Tuple* t1)
     }
 
     if (comp == IN || comp == NOT_IN) {
+      if (left_cell.is_null()) {
+        return false;
+      }
       bool has_in = false;
       if (right->type() == ExprType::CALCULATE) {
         auto expr = (CalculateExpr*)right;
