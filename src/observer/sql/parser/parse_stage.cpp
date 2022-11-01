@@ -176,7 +176,7 @@ void ParseStage::handle_event(StageEvent *event)
   auto rebuild = [](string temp){
     string k;
     for (auto ch : temp) {
-      if (ch == '(' || ch == ')' || ch == '*') k += "\\";
+      if (ch == '(' || ch == ')' || ch == '*' || ch == '.') k += "\\";
       k += ch;
     }
     return k;

@@ -95,6 +95,7 @@ bool PredicateOperator::do_predicate(Tuple* t1)
       if (right->type() == ExprType::CALCULATE) {
         auto expr = (CalculateExpr*)right;
         for (auto item : expr->expr_cells()) {
+          if (item == "null") return false;
           if (left_cell.to_string() == item) {
             has_in = true;
             break;
@@ -104,6 +105,7 @@ bool PredicateOperator::do_predicate(Tuple* t1)
         auto expr = (ValueExpr*)right;
         TupleCell right_cell;
         expr->get_value(VTuple{}, right_cell);
+        if (right_cell.is_null()) return false;
         has_in = (left_cell.to_string() == right_cell.to_string());
       }
       if ((comp == IN && has_in == false) || (comp == NOT_IN && has_in == true)) return false;
