@@ -709,7 +709,6 @@ RC Table::update_record(Trx *trx, Record *record, const char *attribute_name, co
     return UNIMPLENMENT;
   } else {
     RC rc;
-
     // update record
     int record_size = table_meta_.record_size();
     char *record_data = record->data();
@@ -731,47 +730,14 @@ RC Table::update_record(Trx *trx, Record *record, const char *attribute_name, co
       }
       memcpy(record_data + field->offset(), value->data, copy_len);
     }
-
     record->set_data(record_data);
-    rc = record_handler_->update_record(record);
-    if (rc != SUCCESS) {
-      LOG_WARN("[Table::update_record] record_handler更新record失败");
-      return rc;
-    }
 
-    // insert index
-    rc = insert_entry_of_indexes(record->data(), record->rid());
-    if (rc != RC::SUCCESS) {
-      RC rc2 ;
-      if(rc != RC::UNIQUE_KEY_EXIST){
-        rc2 = delete_entry_of_indexes(record->data(), record->rid(), true);
-        if (rc2 != RC::SUCCESS) {
-          LOG_ERROR("Failed to rollback index data when insert index entries failed. table name=%s, rc=%d:%s",
-                    name(),
-                    rc2,
-                    strrc(rc2));
-        }
+    if((rc = update_entry_of_indexes(old_data, record_data, record->rid())) == RC::SUCCESS){
+      if ((rc = record_handler_->update_record(record)) != SUCCESS) {
+        LOG_WARN("[Table::update_record] record_handler更新record失败");
       }
-      rc2 = record_handler_->delete_record(&record->rid());
-      if (rc2 != RC::SUCCESS) {
-        LOG_PANIC("Failed to rollback record data when insert index entries failed. table name=%s, rc=%d:%s",
-            name(),
-            rc2,
-            strrc(rc2));
-      }
-      return rc;
     }
-    // delete index
-    rc = delete_entry_of_indexes(old_data, record->rid(), false);
-
-    if (rc != RC::SUCCESS) {
-      LOG_ERROR("Failed to delete indexes of record (rid=%d.%d). rc=%d:%s",
-                record->rid().page_num,
-                record->rid().slot_num,
-                rc,
-                strrc(rc));
-      return rc;
-    }
+    return rc;
   }
   return SUCCESS;
 }
@@ -930,6 +896,21 @@ RC Table::delete_entry_of_indexes(const char *record, const RID &rid, bool error
         break;
       }
     }
+  }
+  return rc;
+}
+
+RC Table::update_entry_of_indexes(const char *old_record, const char* new_record, const RID &rid)
+{
+  RC rc = RC::SUCCESS;
+  for(Index *index : indexes_){
+    if (index->index_meta().is_unique() && index->entry_exist(new_record)){
+      LOG_ERROR("Duplicate unique key in index: %s", index->index_meta().name());
+      return RC::UNIQUE_KEY_EXIST;
+    }
+  }
+  for(Index *index: indexes_){
+    index->update_entry(old_record, new_record, &rid);
   }
   return rc;
 }

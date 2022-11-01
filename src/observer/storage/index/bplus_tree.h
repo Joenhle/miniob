@@ -507,6 +507,8 @@ public:
    */
   RC delete_entry(const std::vector<const char *> &user_key, const RID *rid);
 
+  bool entry_exists(const std::vector<const char *> &user_key);
+
   bool is_empty() const;
 
   /**
@@ -586,7 +588,6 @@ protected:
 private:
   friend class BplusTreeScanner;
   friend class BplusTreeTester;
-  bool entry_exists(const std::vector<const char *> &user_key);
 };
 
 class BplusTreeScanner {

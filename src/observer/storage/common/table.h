@@ -96,6 +96,7 @@ public:
   RC rollback_delete(Trx *trx, const RID &rid);
 
 private:
+  RC update_index();
   RC scan_record(
       Trx *trx, ConditionFilter *filter, int limit, void *context, RC (*record_reader)(Record *record, void *context));
   RC scan_record_by_index(Trx *trx, IndexScanner *scanner, ConditionFilter *filter, int limit, void *context,
@@ -129,6 +130,7 @@ private:
   DiskBufferPool *data_buffer_pool_ = nullptr;   /// 数据文件关联的buffer pool
   RecordFileHandler *record_handler_ = nullptr;  /// 记录操作
   std::vector<Index *> indexes_;
+  RC update_entry_of_indexes(const char *old_record, const char *new_record, const RID &rid);
 };
 
 #endif  // __OBSERVER_STORAGE_COMMON_TABLE_H__

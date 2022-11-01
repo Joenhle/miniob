@@ -133,6 +133,11 @@ RC BplusTreeIndex::update_entry(const char *old_record, const char *new_record, 
   const auto new_key = extract_key(new_record);
   return index_handler_.update_entry(old_key, new_key, rid);
 }
+bool BplusTreeIndex::entry_exist(const char *record)
+{
+  const auto key = extract_key(record);
+  return index_handler_.entry_exists(key);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 BplusTreeIndexScanner::BplusTreeIndexScanner(BplusTreeHandler &tree_handler) : tree_scanner_(tree_handler)
