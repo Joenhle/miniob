@@ -36,4 +36,6 @@ void str_replace_by_regex(std::string& s, std::string regex_str, std::string oth
 
 void str_replace_by_regex(std::string& s, std::string regex_str, std::string(*func)(std::string));
 
+bool str_match_by_regex(std::string& s, std::string regex_str);
+
 bool str_contains_by_regex(std::string& s, std::string regex_str);

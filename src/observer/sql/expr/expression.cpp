@@ -54,9 +54,9 @@ ExprCellType CalculateExpr::get_expr_cell_type(string cell) const
   if (cell == "-") return ExprCellType::MINUS;
   if (cell == "*") return ExprCellType::MULTI;
   if (cell == "/") return ExprCellType::DIV;
-  if (str_contains_by_regex(cell, "[0-9]+\\-[0-9]+\\-[0-9]+")) return ExprCellType::DATE;
-  if (str_contains_by_regex(cell, "[0-9]+.[0-9]+")) return ExprCellType::FLOAT;
-  if (str_contains_by_regex(cell, "[\\-]?[0-9]+")) return ExprCellType::INT;
+  if (str_match_by_regex(cell, "[0-9]+\\-[0-9]+\\-[0-9]+")) return ExprCellType::DATE;
+  if (str_match_by_regex(cell, "[0-9]+.[0-9]+")) return ExprCellType::FLOAT;
+  if (str_match_by_regex(cell, "[\\-]?[0-9]+")) return ExprCellType::INT;
   return ExprCellType::FIELD;
 }
 
