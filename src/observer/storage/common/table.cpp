@@ -283,12 +283,15 @@ RC Table::insert_record(Trx *trx, Record *record)
 
   rc = insert_entry_of_indexes(record->data(), record->rid());
   if (rc != RC::SUCCESS) {
-    RC rc2 = delete_entry_of_indexes(record->data(), record->rid(), true);
-    if (rc2 != RC::SUCCESS) {
-      LOG_ERROR("Failed to rollback index data when insert index entries failed. table name=%s, rc=%d:%s",
-          name(),
-          rc2,
-          strrc(rc2));
+    RC rc2;
+    if(rc != RC::UNIQUE_KEY_EXIST){
+      rc2 = delete_entry_of_indexes(record->data(), record->rid(), true);
+      if (rc2 != RC::SUCCESS) {
+        LOG_ERROR("Failed to rollback index data when insert index entries failed. table name=%s, rc=%d:%s",
+                  name(),
+                  rc2,
+                  strrc(rc2));
+      }
     }
     rc2 = record_handler_->delete_record(&record->rid());
     if (rc2 != RC::SUCCESS) {
@@ -296,6 +299,13 @@ RC Table::insert_record(Trx *trx, Record *record)
           name(),
           rc2,
           strrc(rc2));
+    }
+    rc2 = trx->delete_record(this, record);
+    if (rc2 != RC::SUCCESS) {
+      LOG_PANIC("Failed to insert delete record to trx when insert index entries failed. table name=%s, rc=%d:%s",
+                name(),
+                rc2,
+                strrc(rc2));
     }
     return rc;
   }
@@ -877,6 +887,12 @@ RC Table::rollback_delete(Trx *trx, const RID &rid)
 RC Table::insert_entry_of_indexes(const char *record, const RID &rid)
 {
   RC rc = RC::SUCCESS;
+  for (Index *index : indexes_) {
+    if(index->index_meta().is_unique() && index->entry_exist(record)){
+      rc = RC::UNIQUE_KEY_EXIST;
+      break;
+    }
+  }
   for (Index *index : indexes_) {
     rc = index->insert_entry(record, &rid);
     if (rc != RC::SUCCESS) {
