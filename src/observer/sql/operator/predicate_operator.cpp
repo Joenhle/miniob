@@ -18,6 +18,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/stmt/filter_stmt.h"
 #include "storage/common/field.h"
 #include "util/comparator.h"
+#include "util/util.h"
 
 RC PredicateOperator::open()
 {
@@ -96,6 +97,9 @@ bool PredicateOperator::do_predicate(Tuple* t1)
         auto expr = (CalculateExpr*)right;
         for (auto item : expr->expr_cells()) {
           if (item == "null") return false;
+          if (expr->get_expr_cell_type(item) == ExprCellType::FLOAT) {
+            item = double2string(atof(item.c_str()));
+          }
           if (left_cell.to_string() == item) {
             has_in = true;
             break;

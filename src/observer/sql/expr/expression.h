@@ -154,9 +154,9 @@ public:
   RC get_value(const Tuple &tuple, TupleCell &cell) const override;
   std::string get_name() const override;
   vector<string> expr_cells() { return expr_cells_; }
+  ExprCellType get_expr_cell_type(string expr_cell) const;
 
 private:
-  ExprCellType get_expr_cell_type(string expr_cell) const;
   string name_;
   vector<string> expr_cells_;
 };
