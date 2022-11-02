@@ -181,6 +181,12 @@ void ParseStage::handle_event(StageEvent *event)
     }
     return k;
   };
+
+  auto cell2str = [](TupleCell& cell){
+    if (cell.attr_type() == AttrType::CHARS) return "'" + cell.to_string() + "'";
+    return cell.to_string();
+  };
+
   string new_sql = sql_event->sql();
   while (sub_query_pair.second != SubQueryOper::NO_OPER) {
     auto sub_query_str = sub_query_pair.first;
@@ -190,20 +196,24 @@ void ParseStage::handle_event(StageEvent *event)
         return;
       }
       auto sub_select_tuples = sql_event->sub_query_res();
-      if ((sub_query_pair.second == SubQueryOper::IN && (sub_select_tuples.size() == 0 || sub_select_tuples[0]->cell_num() != 1)) ||
-          (sub_query_pair.second == SubQueryOper::COMPARE && (sub_select_tuples.size() != 1 || sub_select_tuples[0]->cell_num() != 1))) {
-        sql_event->session_event()->set_response("FAILURE\n");
-        callback_event(sql_event, nullptr);
-        return;
+      string value;
+      if (sub_select_tuples.size() == 0) {
+        value = "null";
+      } else {
+        if ((sub_query_pair.second == SubQueryOper::IN && (sub_select_tuples[0]->cell_num() != 1)) ||
+            (sub_query_pair.second == SubQueryOper::COMPARE && (sub_select_tuples.size() != 1 || sub_select_tuples[0]->cell_num() != 1))) {
+          sql_event->session_event()->set_response("FAILURE\n");
+          callback_event(sql_event, nullptr);
+          return;
+        }
       }
       TupleCell cell;
-      string value;
       for (int i = 0; i < sub_select_tuples.size(); ++i) {
         sub_select_tuples[i]->cell_at(0, cell);
         if (i == sub_select_tuples.size() - 1) {
-          value += cell.to_string();
+          value += cell2str(cell);
         } else {
-          value += cell.to_string() + ",";
+          value += cell2str(cell) + ",";
         }
       }
       sub_query_str = rebuild(sub_query_str);
@@ -260,15 +270,18 @@ void ParseStage::handle_event(StageEvent *event)
           }
           value_set.insert(cell.to_string());
           if (i == sub_select_tuples.size() - 1) {
-            value += cell.to_string();
+            value += cell2str(cell);
           } else {
-            value += cell.to_string() + ",";
+            value += cell2str(cell) + ",";
           }
         }
         in_values.push_back(value);
       }
       bool is_not_exists = str_contains_by_regex(new_sql, "[Nn][Oo][Tt][ ]*[Ee][Xx][Ii][Ss][Tt][Ss]");
       string replaced_str = fields[0];
+      if (in_values[0][in_values[0].length()-1] == ',') {
+        in_values[0] = in_values[0].substr(0, in_values[0].length()-1);
+      }
       if (is_not_exists) {
         replaced_str += (" not in (" + in_values[0] + ") ");
         str_replace_by_regex(new_sql, "[Nn][Oo][Tt][ ]*[Ee][Xx][Ii][Ss][Tt][Ss][ ]*\\([ ]*" + rebuild(sub_query_pair.first) + "[ ]*\\)", replaced_str);
