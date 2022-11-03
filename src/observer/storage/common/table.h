@@ -113,7 +113,7 @@ private:
   friend class RecordUpdater;
   friend class RecordDeleter;
 
-  RC insert_entry_of_indexes(const char *record, const RID &rid);
+  RC insert_entry_of_indexes(const Record &record);
   RC delete_entry_of_indexes(const char *record, const RID &rid, bool error_on_not_exists);
 
 private:

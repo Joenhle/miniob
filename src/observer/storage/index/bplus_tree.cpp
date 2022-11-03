@@ -1754,6 +1754,7 @@ RC BplusTreeHandler::update_entry(
   if(file_header_.is_unique_ && entry_exists(new_user_key)){
     return RC::UNIQUE_KEY_EXIST;
   }
+  // TODO: take nullable fields into account
   if(delete_entry(old_user_key, rid) == RC::SUCCESS){
     return insert_entry(new_user_key, rid);
   }else {

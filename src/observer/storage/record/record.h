@@ -18,11 +18,17 @@ See the Mulan PSL v2 for more details. */
 #include <vector>
 #include <limits>
 #include <sstream>
+#include <bitset>
 
 #include "rc.h"
 #include "defs.h"
 #include "storage/common/index_meta.h"
 #include "storage/common/field_meta.h"
+
+#define NULL_BITMAP_OFFSET 4
+#define NULL_BITMAP_SIZE 4 * 8// 4 bytes
+#define RECORD_NULL_RAW_BITMAP(record) (*(int *)(record+NULL_BITMAP_OFFSET))
+#define RECORD_NULL_BITMAP(record) (std::bitset<NULL_BITMAP_SIZE>(*(int *)(record+NULL_BITMAP_OFFSET)))
 
 class Field;
 
@@ -87,19 +93,27 @@ class Record
 public:
   Record() = default;
   ~Record() = default;
+  using NullBitMap = std::bitset<NULL_BITMAP_SIZE>;
 
-  void set_data(char *data) { this->data_ = data; }
+  void set_data(char *data) {
+    this->data_ = data;
+    null_bitmap_.reset();
+    null_bitmap_ |= RECORD_NULL_RAW_BITMAP(data);
+  }
   char *data() { return this->data_; }
   const char *data() const { return this->data_; }
   void set_rid(const RID &rid) { this->rid_ = rid; }
   void set_rid(const PageNum page_num, const SlotNum slot_num) { this->rid_.page_num = page_num; this->rid_.slot_num = slot_num; }
   RID & rid() { return rid_; }
   const RID &rid() const { return rid_; };
+  const NullBitMap& get_null_bitmap() const{
+    return null_bitmap_;
+  }
+
   std::vector<int> null_fields() {
     std::vector<int> arr;
-    int num = *(int*)(data_+4);
-    for (int i = 0; i < 32; ++i) {
-      if ((num & (1 << i)) != 0) {
+    for (int i = 0; i < NULL_BITMAP_SIZE; ++i) {
+      if(null_bitmap_.test(i)){
         arr.push_back(i);
       }
     }
@@ -112,4 +126,5 @@ private:
   // the data buffer
   // record will not release the memory
   char *                         data_ = nullptr;
+  NullBitMap null_bitmap_;
 };

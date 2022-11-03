@@ -80,3 +80,14 @@ SELECT count(num) FROM null_table3;
 SELECT min(num) FROM null_table3;
 SELECT max(num) FROM null_table3;
 SELECT avg(num) FROM null_table3;
+
+CREATE TABLE null_unique_table(id int, num int nullable, birthday date nullable);
+CREATE UNIQUE INDEX unique_test ON null_unique_table(id, num);
+-- should success
+INSERT INTO null_unique_table VALUES(1, 1, '2020-02-01');
+INSERT INTO null_unique_table VALUES(2, 1, '2020-02-12');
+INSERT INTO null_unique_table VALUES(3, 1, '2020-02-12');
+
+-- insert NULL data
+INSERT INTO null_unique_table VALUES(1, NULL, '2020-02-02');
+INSERT INTO null_unique_table VALUES(1, NULL, '2020-02-03');

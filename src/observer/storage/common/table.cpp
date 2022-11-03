@@ -281,7 +281,7 @@ RC Table::insert_record(Trx *trx, Record *record)
     }
   }
 
-  rc = insert_entry_of_indexes(record->data(), record->rid());
+  rc = insert_entry_of_indexes(*record);
   if (rc != RC::SUCCESS) {
     RC rc2;
     if(rc != RC::UNIQUE_KEY_EXIST){
@@ -928,17 +928,42 @@ RC Table::rollback_delete(Trx *trx, const RID &rid)
   return trx->rollback_delete(this, record);  // update record in place
 }
 
-RC Table::insert_entry_of_indexes(const char *record, const RID &rid)
+//RC Table::foo(){
+//
+//}
+RC Table::insert_entry_of_indexes(const Record &record)
 {
   RC rc = RC::SUCCESS;
-  for (Index *index : indexes_) {
-    if(index->index_meta().is_unique() && index->entry_exist(record)){
+  auto data = record.data();
+  auto rid = record.rid();
+  auto null_bitmap = record.get_null_bitmap();
+  std::vector<bool> need_to_insert(indexes_.size(), true);
+  // check whether we need to insert this record to the index
+  auto num_of_index = indexes_.size();
+  for(int i = 0; i < num_of_index; i++){
+    auto index = indexes_[i];
+    auto num_of_fields = index->index_meta().get_num_of_fields();
+    for(int j = 0; j < num_of_fields; j++) {
+      auto field_name = index->index_meta().field(j);
+      auto field_index = table_meta_.field_index(field_name);
+      if(null_bitmap.test(field_index)){
+        need_to_insert[i] = false;
+        break;
+      }
+    }
+  }
+  for (int i = 0; i < num_of_index; i++) {
+    if(!need_to_insert[i]) continue;
+    auto index = indexes_[i];
+    if(index->index_meta().is_unique() && index->entry_exist(data)){
       rc = RC::UNIQUE_KEY_EXIST;
       break;
     }
   }
-  for (Index *index : indexes_) {
-    rc = index->insert_entry(record, &rid);
+  for (int i = 0; i < num_of_index; i++) {
+    if(!need_to_insert[i]) continue;
+    auto index = indexes_[i];
+    rc = index->insert_entry(data, &rid);
     if (rc != RC::SUCCESS) {
       break;
     }
