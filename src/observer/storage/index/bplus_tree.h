@@ -527,8 +527,8 @@ public:
    */
   bool validate_tree();
 
-  RC update_entry(
-      const std::vector<const char *> &old_user_key, const std::vector<const char *> &new_user_key, const RID *rid);
+  RC update_entry(const std::vector<const char *> &old_user_key, const std::vector<const char *> &new_user_key,
+      const RID *rid, bool need_to_del_old, bool need_to_ins_new);
 
 public:
   RC print_tree();

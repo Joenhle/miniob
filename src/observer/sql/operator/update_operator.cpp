@@ -30,14 +30,6 @@ RC UpdateOperator::open() {
     int val_amount = update_stmt_->value_amount();
     vector<std::string > to_update_attr_name = update_stmt_->update_attr();
     vector<Value *> to_update_attr_val = update_stmt_->values();
-//    for(int i = 0 ;i < val_amount ; i++){
-//      const char * attr_name = to_update_attr_name[i].c_str();
-//      rc = table->update_record(nullptr,&record,attr_name,to_update_attr_val[i]);
-//      if (rc != SUCCESS) {
-//        LOG_WARN("Failed to update record: %s.", strrc(rc));
-//        return rc;
-//      }
-//    }
     rc = table->update_record(nullptr,&record,to_update_attr_name,to_update_attr_val);
     if (rc != SUCCESS) {
       LOG_WARN("Failed to update record: %s.", strrc(rc));

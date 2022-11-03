@@ -127,11 +127,12 @@ std::vector<const char *> BplusTreeIndex::extract_key(const char *record)
   }
   return key;
 }
-RC BplusTreeIndex::update_entry(const char *old_record, const char *new_record, const RID *rid)
+RC BplusTreeIndex::update_entry(
+    const char *old_record, const char *new_record, const RID *rid, bool need_to_del_old, bool need_to_ins_new)
 {
   const auto old_key = extract_key(old_record);
   const auto new_key = extract_key(new_record);
-  return index_handler_.update_entry(old_key, new_key, rid);
+  return index_handler_.update_entry(old_key, new_key, rid, need_to_del_old, need_to_ins_new);
 }
 bool BplusTreeIndex::entry_exist(const char *record)
 {

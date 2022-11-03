@@ -91,3 +91,6 @@ INSERT INTO null_unique_table VALUES(3, 1, '2020-02-12');
 -- insert NULL data
 INSERT INTO null_unique_table VALUES(1, NULL, '2020-02-02');
 INSERT INTO null_unique_table VALUES(1, NULL, '2020-02-03');
+-- update null to not null
+DELETE FROM null_unique_table WHERE birthday='2020-02-03';
+UPDATE null_unique_table SET num = 1 WHERE birthday='2020-02-03';

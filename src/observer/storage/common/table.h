@@ -132,6 +132,8 @@ private:
   RecordFileHandler *record_handler_ = nullptr;  /// 记录操作
   std::vector<Index *> indexes_;
   RC update_entry_of_indexes(const char *old_record, const char *new_record, const RID &rid);
+  std::vector<bool> need_of_operation(const Record &record) const;
+  std::vector<bool> need_of_operation(const char *data) const;
 };
 
 #endif  // __OBSERVER_STORAGE_COMMON_TABLE_H__

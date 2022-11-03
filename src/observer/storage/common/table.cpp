@@ -184,8 +184,8 @@ RC Table::open(const char *meta_file, const char *base_dir, CLogManager *clog_ma
   const int index_num = table_meta_.index_num();
   for (int i = 0; i < index_num; i++) {
     const IndexMeta *index_meta = table_meta_.index(i);
-    std::vector<const FieldMeta*> field_metas;
-    if(index_meta->get_field_metas(table_meta_, field_metas) != RC::SUCCESS){
+    std::vector<const FieldMeta *> field_metas;
+    if (index_meta->get_field_metas(table_meta_, field_metas) != RC::SUCCESS) {
       // skip cleanup
       //  do all cleanup action in destructive Table function
       return RC::GENERIC_ERROR;
@@ -284,13 +284,13 @@ RC Table::insert_record(Trx *trx, Record *record)
   rc = insert_entry_of_indexes(*record);
   if (rc != RC::SUCCESS) {
     RC rc2;
-    if(rc != RC::UNIQUE_KEY_EXIST){
+    if (rc != RC::UNIQUE_KEY_EXIST) {
       rc2 = delete_entry_of_indexes(record->data(), record->rid(), true);
       if (rc2 != RC::SUCCESS) {
         LOG_ERROR("Failed to rollback index data when insert index entries failed. table name=%s, rc=%d:%s",
-                  name(),
-                  rc2,
-                  strrc(rc2));
+            name(),
+            rc2,
+            strrc(rc2));
       }
     }
     rc2 = record_handler_->delete_record(&record->rid());
@@ -303,9 +303,9 @@ RC Table::insert_record(Trx *trx, Record *record)
     rc2 = trx->delete_record(this, record);
     if (rc2 != RC::SUCCESS) {
       LOG_PANIC("Failed to insert delete record to trx when insert index entries failed. table name=%s, rc=%d:%s",
-                name(),
-                rc2,
-                strrc(rc2));
+          name(),
+          rc2,
+          strrc(rc2));
     }
     return rc;
   }
@@ -399,7 +399,7 @@ RC Table::make_record(int value_num, const Value *values, char *&record_out)
   int record_size = table_meta_.record_size();
   char *record = new char[record_size];
 
-  int* null_value_map = new int(0);
+  int *null_value_map = new int(0);
   for (int i = 0; i < value_num; i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
     const Value &value = values[i];
@@ -616,7 +616,7 @@ RC Table::create_index(Trx *trx, const char *index_name, std::vector<std::string
         vector2str(fields).c_str());
     return RC::SCHEMA_INDEX_EXIST;
   }
-  std::vector<const FieldMeta*> field_metas;
+  std::vector<const FieldMeta *> field_metas;
   RC rc = table_meta_.field(fields, field_metas);
   if (rc != RC::SUCCESS) {
     LOG_INFO("Invalid input arguments, there is no schema of %s in table:%s.", vector2str(fields).c_str(), name());
@@ -699,9 +699,9 @@ RC Table::create_index(Trx *trx, const char *index_name, std::vector<std::string
 RC Table::update_record(Trx *trx, Record *record, std::vector<std::string> attr_names, std::vector<Value *> attr_values)
 {
   // parameter
-  for(int i = 0 ; i < attr_names.size();i++){
+  for (int i = 0; i < attr_names.size(); i++) {
     const char *attribute_name = attr_names[i].c_str();
-    Value * value = attr_values[i];
+    Value *value = attr_values[i];
     if (attribute_name == nullptr || value == nullptr) {
       LOG_WARN("[Table::update_record] attribute_name or value is nullptr");
       return GENERIC_ERROR;
@@ -717,21 +717,6 @@ RC Table::update_record(Trx *trx, Record *record, std::vector<std::string> attr_
       return GENERIC_ERROR;
     }
   }
-//  if (attribute_name == nullptr || value == nullptr) {
-//    LOG_WARN("[Table::update_record] attribute_name or value is nullptr");
-//    return GENERIC_ERROR;
-//  }
-//  const FieldMeta *field = table_meta_.field(attribute_name);
-//  if (field == nullptr) {
-//    LOG_WARN("[Table::update_record] find field by attribute_name[%s] error", attribute_name);
-//    return GENERIC_ERROR;
-//  }
-//  if (value->type != UNDEFINED && field->type() != value->type) {
-//    LOG_WARN(
-//        "[table::update_record] the type of attribute[%s] and value[%s] are different", field->type(), value->type);
-//    return GENERIC_ERROR;
-//  }
-
 
   if (trx != nullptr) {
     LOG_WARN("[Table::update_record] not support method with trx");
@@ -742,19 +727,21 @@ RC Table::update_record(Trx *trx, Record *record, std::vector<std::string> attr_
     int record_size = table_meta_.record_size();
     char *record_data = record->data();
     auto old_data = new char[record_size];
+    auto new_data = new char[record_size];
     memcpy(old_data, record_data, record_size);
-    int* null_value_map = (int*)(record_data + table_meta_.field(1)->offset());
+    memcpy(new_data, record_data, record_size);
+    int *null_value_map = (int *)(new_data + table_meta_.field(1)->offset());
 
-    for(int i = 0; i < attr_names.size(); i++){
+    for (int i = 0; i < attr_names.size(); i++) {
       const char *attribute_name = attr_names[i].c_str();
-      Value * value = attr_values[i];
+      Value *value = attr_values[i];
       const FieldMeta *field = table_meta_.field(attribute_name);
       if (value->type == UNDEFINED) {
         *null_value_map = set_bit(*null_value_map, table_meta_.field_index(attribute_name), true);
       } else {
         *null_value_map = set_bit(*null_value_map, table_meta_.field_index(attribute_name), false);
       }
-      if(value->type != UNDEFINED){
+      if (value->type != UNDEFINED) {
         if (value->type != UNDEFINED) {
           size_t copy_len = field->len();
           if (field->type() == CHARS) {
@@ -763,30 +750,13 @@ RC Table::update_record(Trx *trx, Record *record, std::vector<std::string> attr_
               copy_len = data_len + 1;
             }
           }
-          memcpy(record_data + field->offset(), value->data, copy_len);
+          memcpy(new_data + field->offset(), value->data, copy_len);
         }
       }
-
     }
-//    if (value->type == UNDEFINED) {
-//      *null_value_map = set_bit(*null_value_map, table_meta_.field_index(attribute_name), true);
-//    } else {
-//      *null_value_map = set_bit(*null_value_map, table_meta_.field_index(attribute_name), false);
-//    }
 
-//    if (value->type != UNDEFINED) {
-//      size_t copy_len = field->len();
-//      if (field->type() == CHARS) {
-//        const size_t data_len = strlen((const char *)value->data);
-//        if (copy_len > data_len) {
-//          copy_len = data_len + 1;
-//        }
-//      }
-//      memcpy(record_data + field->offset(), value->data, copy_len);
-//    }
-    record->set_data(record_data);
-
-    if((rc = update_entry_of_indexes(old_data, record_data, record->rid())) == RC::SUCCESS){
+    if ((rc = update_entry_of_indexes(old_data, new_data, record->rid())) == RC::SUCCESS) {
+      record->set_data(new_data);
       if ((rc = record_handler_->update_record(record)) != SUCCESS) {
         LOG_WARN("[Table::update_record] record_handler更新record失败");
       }
@@ -928,40 +898,68 @@ RC Table::rollback_delete(Trx *trx, const RID &rid)
   return trx->rollback_delete(this, record);  // update record in place
 }
 
-//RC Table::foo(){
+// RC Table::foo(){
 //
-//}
-RC Table::insert_entry_of_indexes(const Record &record)
+// }
+std::vector<bool> Table::need_of_operation(const Record &record) const
 {
-  RC rc = RC::SUCCESS;
-  auto data = record.data();
-  auto rid = record.rid();
   auto null_bitmap = record.get_null_bitmap();
-  std::vector<bool> need_to_insert(indexes_.size(), true);
-  // check whether we need to insert this record to the index
+  std::vector<bool> need_to_do_op(indexes_.size(), true);
+  // check whether we need to do operation on index with this record
   auto num_of_index = indexes_.size();
-  for(int i = 0; i < num_of_index; i++){
+  for (int i = 0; i < num_of_index; i++) {
     auto index = indexes_[i];
     auto num_of_fields = index->index_meta().get_num_of_fields();
-    for(int j = 0; j < num_of_fields; j++) {
+    for (int j = 0; j < num_of_fields; j++) {
       auto field_name = index->index_meta().field(j);
       auto field_index = table_meta_.field_index(field_name);
-      if(null_bitmap.test(field_index)){
-        need_to_insert[i] = false;
+      if (null_bitmap.test(field_index)) {
+        need_to_do_op[i] = false;
         break;
       }
     }
   }
+  return need_to_do_op;
+}
+std::vector<bool> Table::need_of_operation(const char *data) const
+{
+  // abstraction Leak
+  auto null_bitmap = RECORD_NULL_BITMAP(data);
+  std::vector<bool> need_to_do_op(indexes_.size(), true);
+  // check whether we need to do operation on index with this record
+  auto num_of_index = indexes_.size();
   for (int i = 0; i < num_of_index; i++) {
-    if(!need_to_insert[i]) continue;
     auto index = indexes_[i];
-    if(index->index_meta().is_unique() && index->entry_exist(data)){
+    auto num_of_fields = index->index_meta().get_num_of_fields();
+    for (int j = 0; j < num_of_fields; j++) {
+      auto field_name = index->index_meta().field(j);
+      auto field_index = table_meta_.field_index(field_name);
+      if (null_bitmap.test(field_index)) {
+        need_to_do_op[i] = false;
+        break;
+      }
+    }
+  }
+  return need_to_do_op;
+}
+
+RC Table::insert_entry_of_indexes(const Record &record)
+{
+  RC rc = RC::SUCCESS;
+  auto need_to_insert = need_of_operation(record);
+  auto data = record.data();
+  auto rid = record.rid();
+  auto num_of_index = indexes_.size();
+  for (int i = 0; i < num_of_index; i++) {
+    if (!need_to_insert[i]) continue;
+    auto index = indexes_[i];
+    if (index->index_meta().is_unique() && index->entry_exist(data)) {
       rc = RC::UNIQUE_KEY_EXIST;
       break;
     }
   }
   for (int i = 0; i < num_of_index; i++) {
-    if(!need_to_insert[i]) continue;
+    if (!need_to_insert[i]) continue;
     auto index = indexes_[i];
     rc = index->insert_entry(data, &rid);
     if (rc != RC::SUCCESS) {
@@ -974,7 +972,11 @@ RC Table::insert_entry_of_indexes(const Record &record)
 RC Table::delete_entry_of_indexes(const char *record, const RID &rid, bool error_on_not_exists)
 {
   RC rc = RC::SUCCESS;
-  for (Index *index : indexes_) {
+  std::vector<bool> need_to_del = need_of_operation(record);
+  auto num_of_index = indexes_.size();
+  for (int i = 0; i < num_of_index; i++) {
+    if (!need_to_del[i]) continue;
+    auto index = indexes_[i];
     rc = index->delete_entry(record, &rid);
     if (rc != RC::SUCCESS) {
       if (rc != RC::RECORD_INVALID_KEY || !error_on_not_exists) {
@@ -985,17 +987,22 @@ RC Table::delete_entry_of_indexes(const char *record, const RID &rid, bool error
   return rc;
 }
 
-RC Table::update_entry_of_indexes(const char *old_record, const char* new_record, const RID &rid)
+RC Table::update_entry_of_indexes(const char *old_record, const char *new_record, const RID &rid)
 {
   RC rc = RC::SUCCESS;
-  for(Index *index : indexes_){
-    if (index->index_meta().is_unique() && index->entry_exist(new_record)){
+  auto need_to_del_old = need_of_operation(old_record);
+  auto need_to_ins_new = need_of_operation(new_record);
+  auto num_of_index = indexes_.size();
+  for (int i = 0; i < num_of_index; i++) {
+    if (!need_to_ins_new[i]) continue;
+    auto index = indexes_[i];
+    if (index->index_meta().is_unique() && index->entry_exist(new_record)) {
       LOG_ERROR("Duplicate unique key in index: %s", index->index_meta().name());
       return RC::UNIQUE_KEY_EXIST;
     }
   }
-  for(Index *index: indexes_){
-    index->update_entry(old_record, new_record, &rid);
+  for (Index *index : indexes_) {
+    index->update_entry(old_record, new_record, &rid, true, true);
   }
   return rc;
 }
