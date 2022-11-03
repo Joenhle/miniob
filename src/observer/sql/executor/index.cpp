@@ -66,6 +66,13 @@ IndexScanOperator *try_to_create_index_scan_operator(vector<FilterUnit*>& filter
     const Table *table = field.table();
     Index *index = table->find_index_by_field(field.field_name());
     if (index != nullptr) {
+      auto fields_num = index->index_meta().get_num_of_fields();
+      for(int i = 0; i<fields_num; i++){
+        auto field_index = table->table_meta().field_index(index->index_meta().field(i));
+        if(table->table_meta().is_field_nullable(field_index)){
+          return nullptr;
+        }
+      }
       if (better_filter == nullptr) {
         better_filter = filter_unit;
       } else if (filter_unit->comp() == EQUAL_TO) {
