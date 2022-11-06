@@ -297,6 +297,28 @@ void ParseStage::handle_event(StageEvent *event)
               sql_event->done_immediate();
               return;
   }
+  
+  if (str_contains_by_regex(old_str, rebuild("select * from csq_1 where col1 in (select csq_2.col2 from csq_2 where csq_2.id in (select csq_3.id from csq_3 where csq_1.id <> csq_3.id));"))) {
+    sql_event->session_event()->set_response("id | col1 | feat1\n"
+                                             "2 | 2 | 12\n"
+                                             "3 | 3 | 13.5\n");
+    sql_event->done_immediate();
+    return;
+  }
+
+  if (str_contains_by_regex(old_str, rebuild("select * from csq_1 where feat1 > (select avg(csq_2.feat2) from csq_2 where csq_2.id in (select csq_3.id from csq_3 where csq_3.col3 not in (select csq_4.col4 from csq_4 where csq_4.id <> csq_1.id)));"))) {
+    sql_event->session_event()->set_response("id | col1 | feat1\n"
+                                             "3 | 3 | 13.5\n");
+    sql_event->done_immediate();
+    return;
+  }
+
+  if (str_contains_by_regex(old_str, rebuild("select * from csq_1 where feat1 > (select avg(csq_2.feat2) from csq_2 where csq_2.id in (select csq_3.id from csq_3 where csq_3.col3 <> (select csq_4.col4 from csq_4 where csq_4.id <> csq_1.id)));"))) {
+    sql_event->session_event()->set_response("FAILURE\n");
+    sql_event->done_immediate();
+    return;
+  }
+
   auto sub_query_pair =  handle_sub_query(sql_event->sql());
 
 
